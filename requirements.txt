@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 crewai
+crewai-tools
 python-dotenv
 pydantic
 requests

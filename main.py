@@ -1,3 +1,4 @@
+from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import os
@@ -119,3 +120,82 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+@app.get("/test-form")
+async def test_form():
+    """
+    Simple HTML form to test the ICP agent
+    """
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Test ICP Intelligence Agent</title>
+        <style>
+            body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
+            input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
+            button { background: #007cba; color: white; padding: 15px 30px; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <h1>🤖 Test ICP Intelligence Agent</h1>
+        <form id="testForm">
+            <label>Company Name:</label>
+            <input type="text" id="company_name" value="Test Digital Agency" required>
+            
+            <label>Industry:</label>
+            <input type="text" id="industry" value="Digital Marketing" required>
+            
+            <label>Target Market:</label>
+            <input type="text" id="target_market" value="Small business owners who need help with online marketing" required>
+            
+            <label>Current Challenges:</label>
+            <textarea id="current_challenges" rows="3" required>Struggling to generate consistent leads and convert website visitors into customers</textarea>
+            
+            <label>Product/Service:</label>
+            <input type="text" id="product_service" value="Marketing consulting and lead generation services">
+            
+            <button type="submit">🚀 Run ICP Research</button>
+        </form>
+        
+        <div id="results" style="margin-top: 30px;"></div>
+        
+        <script>
+            document.getElementById('testForm').onsubmit = async function(e) {
+                e.preventDefault();
+                
+                const button = document.querySelector('button');
+                const results = document.getElementById('results');
+                
+                button.textContent = '🤖 Agent Working...';
+                button.disabled = true;
+                
+                const data = {
+                    company_name: document.getElementById('company_name').value,
+                    industry: document.getElementById('industry').value,
+                    target_market: document.getElementById('target_market').value,
+                    current_challenges: document.getElementById('current_challenges').value,
+                    product_service: document.getElementById('product_service').value,
+                    assumptions: ''
+                };
+                
+                try {
+                    const response = await fetch('/research/icp-analysis', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    results.innerHTML = '<h3>Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } catch (error) {
+                    results.innerHTML = '<h3>Error:</h3><p>' + error.message + '</p>';
+                }
+                
+                button.textContent = '🚀 Run ICP Research';
+                button.disabled = false;
+            };
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)

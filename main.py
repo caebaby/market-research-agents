@@ -5,7 +5,15 @@ from typing import Dict, Any
 import json
 
 # Import our new agent
-from agents.icp_intelligence_agent import run_icp_research
+try:
+    from agents.icp_intelligence_agent import run_icp_research
+    AGENTS_AVAILABLE = True
+except ImportError as e:
+    print(f"Agent import failed: {e}")
+    AGENTS_AVAILABLE = False
+    
+    def run_icp_research(context):
+        return "Agent system loading... Please try again in a moment."
 
 app = FastAPI(title="Market Research Agent Team", version="2.0.0")
 

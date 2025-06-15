@@ -1,63 +1,93 @@
 from crewai import Agent, Task, Crew
 from crewai_tools import WebsiteSearchTool, SerperDevTool
 from langchain_openai import ChatOpenAI
+import json
 import os
 
-class ICPIntelligenceAgent:
+class ReasoningICPAgent:
     def __init__(self):
-        self.llm = ChatOpenAI(
+        # Primary LLM for research
+        self.research_llm = ChatOpenAI(
             model="gpt-4o-mini",
             temperature=0.3
+        )
+        
+        # Evaluation LLM (can be cheaper model)
+        self.evaluation_llm = ChatOpenAI(
+            model="gpt-4o-mini", 
+            temperature=0.1  # More deterministic for evaluation
         )
         
         # Initialize tools
         self.web_search = SerperDevTool()
         self.website_tool = WebsiteSearchTool()
         
-    def create_agent(self):
+        # Quality standards
+        self.quality_standards = {
+            "minimum_confidence": 80,
+            "insight_specificity": 85,
+            "customer_language_authenticity": 85,
+            "emotional_depth_required": 80,
+            "business_actionability": 85,
+            "max_iterations": 3
+        }
+        
+        # Reasoning memory
+        self.reasoning_trace = []
+        
+    def create_research_agent(self):
         return Agent(
-            role="Elite Business Intelligence Researcher",
-            goal="Conduct comprehensive ICP and psychological framework research using proven methodology that simulates 40+ hours of in-depth qualitative research",
-            backstory="""You are an Elite Business Intelligence Researcher conducting comprehensive ICP and psychological framework research. You follow a proven methodology that simulates 40+ hours of in-depth qualitative research.
+            role="Elite Business Intelligence Researcher with Reasoning Capabilities",
+            goal="Conduct comprehensive ICP research through iterative reasoning, self-evaluation, and quality improvement until professional consultant standards are met",
+            backstory="""You are an Elite Business Intelligence Researcher with advanced reasoning capabilities. You don't just execute research - you think through problems, evaluate your own work, and iteratively improve until you achieve professional consulting quality.
 
-CRITICAL RESEARCH PRINCIPLES:
-✅ NO HALLUCINATIONS: Ground all insights in verifiable logic, common patterns, or cross-referenced data points
-✅ DEPTH & NUANCE: Go beyond surface demographics to uncover emotions, contradictions, hidden motivations, unspoken pains
-✅ AUTHENTIC LANGUAGE CAPTURE: Identify specific words, phrases, metaphors, sentence structures the target audience uses
-✅ VALIDATION REQUIRED: Multi-angle analysis, contradiction testing, evidence-based reasoning for every major insight
-✅ HUMAN RESEARCH SIMULATION: Output must read as if 40+ hours of qualitative research was conducted
+REASONING PRINCIPLES:
+✅ SELF-EVALUATION: Constantly assess the quality and depth of your insights
+✅ ITERATIVE IMPROVEMENT: If confidence <80%, research deeper until standards met
+✅ CONTRADICTION TESTING: Actively challenge your own findings
+✅ EVIDENCE VALIDATION: Every insight must have solid supporting evidence
+✅ PROFESSIONAL STANDARDS: Ask "Would a $500/hour consultant deliver this quality?"
 
-RESEARCH METHODOLOGY & VALIDATION FRAMEWORK:
+QUALITY GATES:
+- Minimum 80% confidence on all major insights
+- Customer language must sound authentic, not AI-generated  
+- Insights must be specific and actionable, not generic
+- Emotional depth must reveal hidden motivations
+- Business applications must be immediately implementable
 
-1. Multi-Angle Analysis & Validation:
-For each significant insight:
-- Describe what is likely true based on evidence/logic
-- Identify situations where this might NOT be true
-- Find potential contradictions (stated belief vs. actual behavior)
-- Assess confidence level with supporting logic
-- Flag as hypothesis if confidence <70%
-
-2. Contradiction Testing:
-Actively argue against your own insights:
-- What external forces could invalidate this insight?
-- Where would this fail within the broader target market?
-- What behaviors might contradict this assumption?
-
-3. Voice of Customer Focus:
-Throughout analysis, capture exact language, phrases, terminology, metaphors the audience uses when discussing problems, pains, desires, aspirations.
-
-You excel at psychological profiling, voice of customer analysis, and transforming research into structured business intelligence.""",
+You use advanced reasoning to identify gaps in your research, select appropriate tools, and improve your insights through multiple iterations until professional standards are achieved.""",
             
             tools=[self.web_search, self.website_tool],
-            llm=self.llm,
+            llm=self.research_llm,
             verbose=True,
             allow_delegation=False
         )
     
-    def create_research_task(self, business_context):
+    def create_evaluation_agent(self):
+        return Agent(
+            role="Research Quality Evaluator",
+            goal="Evaluate research quality against professional consulting standards and identify specific improvement areas",
+            backstory="""You are a Research Quality Evaluator who assesses market research against the standards of top-tier consulting firms. You have worked with McKinsey, BCG, and Bain-level research teams.
+
+EVALUATION CRITERIA:
+✅ INSIGHT SPECIFICITY: Are insights specific to this ICP or generic market research?
+✅ EMOTIONAL DEPTH: Does research reveal hidden psychological drivers?
+✅ CUSTOMER LANGUAGE AUTHENTICITY: Do quotes sound genuine or AI-generated?
+✅ BUSINESS ACTIONABILITY: Can insights be immediately implemented?
+✅ EVIDENCE QUALITY: Is each insight supported by credible evidence?
+✅ PROFESSIONAL POLISH: Would this pass peer review at a top consulting firm?
+
+You provide detailed feedback on what needs improvement and specific guidance for enhancement.""",
+            
+            llm=self.evaluation_llm,
+            verbose=True,
+            allow_delegation=False
+        )
+    
+    def initial_research_task(self, business_context):
         return Task(
             description=f"""
-            Conduct comprehensive ICP and psychological framework research for this business:
+            Conduct initial comprehensive ICP research for this business:
             
             BUSINESS CONTEXT:
             Company: {business_context['company_name']}
@@ -65,262 +95,313 @@ You excel at psychological profiling, voice of customer analysis, and transformi
             Offering: {business_context.get('product_service', 'Not specified')}
             Target Market: {business_context['target_market']}
             Current Challenges: {business_context['current_challenges']}
-            Marketing Goal: Generate qualified leads and improve messaging
-            
-            ICP HYPOTHESIS:
-            Role/Title: To be determined through research
-            Assumed Pains: {business_context['current_challenges']}
-            Assumed Desires: {business_context.get('assumptions', 'To be researched')}
             
             COMPREHENSIVE RESEARCH EXECUTION:
+            Follow the complete 11-step methodology previously established:
             
             PART A: FOUNDATIONAL ICP DEVELOPMENT
             Step 1: Refine & Expand Baseline Profile
-            - Refine ICP definition (Role, Demographics, Psychographics) based on input + knowledge
-            - Identify common assumptions about this profile within their industry
-            - Analyze how they perceive themselves vs. how outsiders perceive them
-            - Apply validation & contradiction testing
-            
-            Step 2: Deep Dive - Pains, Problems & Frustrations
-            Identify pains relevant to the offering in layers:
-            - Surface-level/day-to-day operational struggles
-            - Deeper, unstated emotional or strategic pains
-            - Pains they deny or downplay but still feel
-            - Root causes and consequences in their context
-            - Specific words/phrases they use to describe pains
-            
+            Step 2: Deep Dive - Pains, Problems & Frustrations  
             Step 3: Deep Dive - Desires, Aspirations & Motivations
-            Analyze motivations/desires relevant to offering in layers:
-            - Stated goals/what they say they want
-            - Actual underlying desires/what they really want
-            - Potential latent needs/what they need but don't realize
-            - Core psychological drivers behind desires
-            - Specific language they use for aspirations/goals
-            
             Step 4: Voice of Customer Language Synthesis
-            - Key language patterns: keywords, jargon, metaphors, sentence structures
-            - Pain Language Lexicon: words/phrases for frustration, challenges, problems
-            - Desire Language Lexicon: words/phrases for aspirations, goals, outcomes
-            - Tone & Style: typical tone and communication style
             
             PART B: PSYCHOLOGICAL FRAMEWORK ANALYSIS
             Step 5: Jungian Archetype Analysis
-            - Identity & Self-Perception
-            - Dominant Archetypes
-            - Language reflecting archetypes
-            
             Step 6: LAB Profile Analysis
-            - Motivation Direction, Source, Mode, Process, Proactivity, Communication Style
-            - Language revealing LAB preferences
-            
             Step 7: Deep Desires & Motivational Drivers
-            - Analysis across Significance, Connection, Power/Control, Growth, Security, Variety, Contribution
-            - Dominant desires and conflicts
-            - Language expressing desires
-            
             Step 8: Jobs-To-Be-Done Purchase Psychology
-            - Core Job Analysis (Functional, Social, Emotional)
-            - Competition/Current Solution Analysis
-            - Triggers & Purchase Commitment Factors
-            - Objection & Hesitation Analysis
-            - Language for JTBD, frustrations, readiness
-            
             Step 9: Cognitive Biases & Decision Shortcuts
-            - Authority, Social Proof, Scarcity/Loss Aversion, Anchoring, Confirmation, Status Quo biases
-            - Language revealing biases
-            
             Step 10: Influence & Authority Triggers
-            - Authority & Compliance Analysis
-            - Resistance & Trust-Building Factors
-            - Language indicating trust, resistance, action
             
             PART C: VOICE OF CUSTOMER LANGUAGE MAPS
-            Step 11: Funnel Stage Language Patterns
+            Step 11: Funnel Stage Language Patterns (TOFU/MOFU/BOFU)
             
-            11A: TOFU - Attention & Awareness
-            - Problem Recognition Language
-            - Pain Point Articulation
-            - Initial Solution Seeking
-            - Language Map: quotes, terms, questions, tone/urgency
+            SELF-ASSESSMENT REQUIREMENT:
+            After generating insights, evaluate your own work:
+            - Are insights specific enough for this exact ICP?
+            - Do customer quotes sound authentic?
+            - Is emotional depth sufficient (surface + deep + hidden layers)?
+            - Are business applications immediately actionable?
+            - Would this meet professional consulting standards?
             
-            11B: MOFU - Consideration & Evaluation
-            - Solution Evaluation Language
-            - Comparison Terminology
-            - Objection Articulation
-            - Language Map: quotes, criteria, objections, trust indicators
-            
-            11C: BOFU - Decision & Action
-            - Decision Trigger Language
-            - Commitment Terminology
-            - Final Hesitation Language
-            - Language Map: quotes, action terms, reassurance needs
+            If any area scores below 80% confidence, flag for improvement in next iteration.
             """,
             
             expected_output="""
-            A comprehensive JSON-structured research report containing:
+            Complete JSON research report with self-assessment:
             
             {
               "research_summary": {
-                "methodology_applied": "Comprehensive ICP & Psychological Framework Research (40+ hours simulated)",
+                "methodology_applied": "Comprehensive ICP & Psychological Framework Research",
                 "overall_confidence": [0-100],
-                "validation_approach": "Multi-angle analysis, contradiction testing, evidence-based reasoning",
-                "research_depth": "Surface + Deep + Hidden layers analyzed"
+                "iteration_number": 1,
+                "self_assessment": {
+                  "insight_specificity": [0-100],
+                  "emotional_depth": [0-100], 
+                  "customer_language_authenticity": [0-100],
+                  "business_actionability": [0-100],
+                  "evidence_quality": [0-100]
+                },
+                "improvement_needs": ["List specific areas needing enhancement"]
               },
               
-              "foundational_icp": {
-                "refined_profile": {
-                  "role_title": "Specific role with context",
-                  "demographics": {
-                    "age_range": "X-Y years",
-                    "location": "Geographic focus", 
-                    "company_size": "Employee/revenue range",
-                    "experience": "Years in role/industry",
-                    "data_basis": "Based on industry patterns and role requirements",
-                    "confidence": [0-100]
-                  },
-                  "psychographics": {
-                    "self_perception": "How they see themselves",
-                    "external_perception": "How others see them", 
-                    "identity_contradictions": "Gaps between perceptions",
-                    "confidence": [0-100]
-                  }
-                }
-              },
-
-              "pain_analysis": {
-                "surface_pains": [
-                  {
-                    "pain_description": "Day-to-day operational struggle",
-                    "customer_language": ["specific phrases they use"],
-                    "frequency": "How often experienced",
-                    "intensity": "High/Medium/Low impact",
-                    "confidence": [0-100]
-                  }
-                ],
-                "deeper_pains": [
-                  {
-                    "pain_description": "Unstated emotional/strategic pain",
-                    "customer_language": ["how they express this subtly"],
-                    "root_cause": "Underlying driver",
-                    "consequences": "What happens if unresolved",
-                    "confidence": [0-100]
-                  }
-                ],
-                "pain_language_lexicon": {
-                  "frustration_words": ["waste", "constantly", "struggling"],
-                  "problem_phrases": ["can't seem to", "always having to"],
-                  "intensity_indicators": ["overwhelming", "exhausting", "frustrated"],
-                  "confidence": [0-100]
-                }
-              },
-
-              "desire_analysis": {
-                "stated_goals": [
-                  {
-                    "goal_description": "What they publicly say they want",
-                    "customer_language": ["exact phrases used"],
-                    "context": "When/where they express this",
-                    "confidence": [0-100]
-                  }
-                ],
-                "underlying_desires": [
-                  {
-                    "desire_description": "What they really want underneath",
-                    "connection_to_stated": "How it relates to public goals",
-                    "customer_language": ["subtle expressions"],
-                    "psychological_driver": "Core human need being met",
-                    "confidence": [0-100]
-                  }
-                ]
-              },
-
-              "psychological_frameworks": {
-                "jungian_archetypes": {
-                  "dominant_archetype": {
-                    "archetype": "The Achiever",
-                    "evidence": "Language patterns and behavioral indicators",
-                    "customer_language": ["achievement-focused phrases"],
-                    "business_implications": "How this affects purchasing decisions",
-                    "confidence": [0-100]
-                  }
-                },
-                "cognitive_biases": [
-                  {
-                    "bias": "Authority Bias",
-                    "strength": "Strong/Medium/Weak",
-                    "evidence": "Behavioral indicators",
-                    "customer_language": ["authority-seeking phrases"],
-                    "business_application": "How to leverage this",
-                    "confidence": [0-100]
-                  }
-                ]
-              },
-
-              "voice_of_customer_maps": {
-                "tofu_language": {
-                  "problem_recognition": {
-                    "phrases": ["starting to realize", "noticing that"],
-                    "questions": ["Is there a better way to", "Why do I keep"],
-                    "tone": "Frustrated, seeking, uncertain",
-                    "confidence": [0-100]
-                  }
-                },
-                "mofu_language": {
-                  "evaluation_criteria": {
-                    "must_haves": ["has to integrate with", "needs to handle"],
-                    "comparison_terms": ["better than", "unlike X"],
-                    "confidence": [0-100]
-                  }
-                },
-                "bofu_language": {
-                  "decision_triggers": {
-                    "commitment_phrases": ["ready to move forward", "let's do this"],
-                    "urgency_indicators": ["need this now", "can't wait"],
-                    "confidence": [0-100]
-                  }
-                }
-              },
-
-              "research_validation": {
-                "confidence_by_section": {
-                  "foundational_icp": [0-100],
-                  "pain_analysis": [0-100],
-                  "desire_analysis": [0-100],
-                  "psychological_frameworks": [0-100],
-                  "voice_of_customer": [0-100]
-                },
-                "research_gaps": [
-                  "Areas needing additional validation"
-                ],
-                "quality_flags": [
-                  "Insights flagged for additional research"
-                ]
+              [Complete research structure as previously defined...]
+              
+              "reasoning_notes": {
+                "research_approach": "How you approached the research",
+                "confidence_rationale": "Why you assigned these confidence scores",
+                "potential_gaps": "What might be missing or need more investigation",
+                "next_iteration_focus": "What to improve if another iteration needed"
               }
             }
-            
-            Provide specific, detailed insights with authentic customer language throughout. Include confidence scores for every major insight. Focus on business-actionable intelligence, not generic market research.
             """,
             
-            agent=self.create_agent()
+            agent=self.create_research_agent()
         )
+    
+    def evaluation_task(self, research_results):
+        return Task(
+            description=f"""
+            Evaluate the quality of this research against professional consulting standards:
+            
+            RESEARCH TO EVALUATE:
+            {research_results}
+            
+            EVALUATION FRAMEWORK:
+            
+            1. INSIGHT SPECIFICITY (Target: 85+)
+               - Are insights specific to this exact ICP vs generic?
+               - Do demographic details go beyond basic categories?
+               - Are pain points unique to this market segment?
+            
+            2. EMOTIONAL DEPTH (Target: 80+)
+               - Does research reveal surface + deep + hidden psychological layers?
+               - Are root emotional drivers identified?
+               - Is there evidence of genuine psychological insight?
+            
+            3. CUSTOMER LANGUAGE AUTHENTICITY (Target: 85+)
+               - Do quotes sound like real people or AI-generated?
+               - Is vocabulary/tone consistent with target demographic?
+               - Are phrases specific enough to be actionable?
+            
+            4. BUSINESS ACTIONABILITY (Target: 85+)
+               - Can insights be immediately implemented in marketing?
+               - Are recommendations specific and measurable?
+               - Is there clear connection between insights and business strategy?
+            
+            5. EVIDENCE QUALITY (Target: 80+)
+               - Is each major insight supported by credible reasoning?
+               - Are confidence scores justified?
+               - Is source diversity sufficient?
+            
+            PROFESSIONAL VALIDATION:
+            - Would this research pass peer review at McKinsey/BCG?
+            - Is this significantly better than basic market research?
+            - Does this justify premium consulting fees?
+            """,
+            
+            expected_output="""
+            Detailed quality evaluation in JSON format:
+            
+            {
+              "overall_assessment": {
+                "meets_professional_standards": true/false,
+                "overall_grade": "A/B/C/D",
+                "ready_for_client_delivery": true/false
+              },
+              
+              "detailed_scores": {
+                "insight_specificity": [0-100],
+                "emotional_depth": [0-100],
+                "customer_language_authenticity": [0-100], 
+                "business_actionability": [0-100],
+                "evidence_quality": [0-100]
+              },
+              
+              "strengths": [
+                "Specific areas where research excels"
+              ],
+              
+              "improvement_areas": [
+                {
+                  "issue": "Specific problem identified",
+                  "impact": "How this affects research quality",
+                  "recommendation": "Specific improvement action",
+                  "priority": "High/Medium/Low"
+                }
+              ],
+              
+              "iteration_recommendation": {
+                "needs_iteration": true/false,
+                "focus_areas": ["Specific areas to improve"],
+                "research_direction": "How to improve in next iteration"
+              }
+            }
+            """,
+            
+            agent=self.create_evaluation_agent()
+        )
+    
+    def improvement_research_task(self, original_research, evaluation_feedback, iteration_number):
+        return Task(
+            description=f"""
+            ITERATION {iteration_number}: Improve research quality based on evaluation feedback
+            
+            ORIGINAL RESEARCH:
+            {original_research}
+            
+            EVALUATION FEEDBACK:
+            {evaluation_feedback}
+            
+            IMPROVEMENT MISSION:
+            Focus specifically on the identified improvement areas while maintaining quality in strong areas.
+            
+            TARGETED IMPROVEMENTS:
+            - Address each "High" priority improvement area
+            - Enhance low-scoring quality dimensions
+            - Deepen research in flagged focus areas
+            - Strengthen evidence for low-confidence insights
+            
+            REASONING APPROACH:
+            1. Analyze why previous iteration fell short
+            2. Identify specific research gaps to fill
+            3. Use appropriate tools to gather missing information
+            4. Integrate new findings with existing insights
+            5. Validate improvements against quality standards
+            
+            QUALITY VALIDATION:
+            After improvements, re-assess against professional standards:
+            - Have insight specificity scores improved?
+            - Is emotional depth now sufficient?
+            - Do customer quotes sound more authentic?
+            - Are business applications clearer?
+            """,
+            
+            expected_output="""
+            Enhanced research with clear improvements:
+            
+            {
+              "research_summary": {
+                "iteration_number": [current iteration],
+                "improvements_made": ["Specific enhancements in this iteration"],
+                "quality_upgrades": {
+                  "insight_specificity": "How specificity was improved",
+                  "emotional_depth": "How depth was enhanced", 
+                  "customer_language": "How authenticity was improved",
+                  "business_actionability": "How actionability was strengthened"
+                },
+                "updated_confidence": [0-100]
+              },
+              
+              [Complete enhanced research structure...]
+              
+              "iteration_notes": {
+                "changes_made": "Specific modifications in this iteration",
+                "quality_improvements": "How research quality was enhanced",
+                "remaining_gaps": "Any areas still needing work",
+                "confidence_in_improvements": [0-100]
+              }
+            }
+            """,
+            
+            agent=self.create_research_agent()
+        )
+    
+    def reason_through_research(self, business_context):
+        """
+        Main reasoning method that iteratively improves research quality
+        """
+        print("🧠 Starting reasoning-based ICP research...")
+        self.reasoning_trace = []
+        
+        # Initial research
+        print("📊 Iteration 1: Initial comprehensive research...")
+        initial_task = self.initial_research_task(business_context)
+        crew = Crew(
+            agents=[self.create_research_agent()],
+            tasks=[initial_task],
+            verbose=True
+        )
+        
+        research_results = crew.kickoff()
+        self.reasoning_trace.append({
+            "iteration": 1,
+            "type": "initial_research",
+            "results": str(research_results)
+        })
+        
+        # Evaluation loop
+        for iteration in range(2, self.quality_standards["max_iterations"] + 2):
+            print(f"🔍 Evaluating research quality (iteration {iteration-1})...")
+            
+            # Evaluate current research
+            eval_task = self.evaluation_task(research_results)
+            eval_crew = Crew(
+                agents=[self.create_evaluation_agent()],
+                tasks=[eval_task],
+                verbose=True
+            )
+            
+            evaluation = eval_crew.kickoff()
+            self.reasoning_trace.append({
+                "iteration": iteration-1,
+                "type": "evaluation", 
+                "results": str(evaluation)
+            })
+            
+            # Parse evaluation to check if improvement needed
+            try:
+                eval_data = json.loads(str(evaluation))
+                if eval_data.get("overall_assessment", {}).get("ready_for_client_delivery", False):
+                    print("✅ Research meets professional standards! Finalizing...")
+                    break
+                    
+                if not eval_data.get("iteration_recommendation", {}).get("needs_iteration", True):
+                    print("🎯 Research quality sufficient. Finalizing...")
+                    break
+                    
+            except:
+                # If JSON parsing fails, continue with improvement
+                pass
+            
+            if iteration > self.quality_standards["max_iterations"]:
+                print("⏰ Maximum iterations reached. Finalizing current research...")
+                break
+                
+            # Improve research
+            print(f"🔄 Iteration {iteration}: Improving research based on feedback...")
+            improvement_task = self.improvement_research_task(research_results, evaluation, iteration)
+            improvement_crew = Crew(
+                agents=[self.create_research_agent()],
+                tasks=[improvement_task],
+                verbose=True
+            )
+            
+            research_results = improvement_crew.kickoff()
+            self.reasoning_trace.append({
+                "iteration": iteration,
+                "type": "improvement_research",
+                "results": str(research_results)
+            })
+        
+        # Final result with reasoning trace
+        final_result = {
+            "final_research": research_results,
+            "reasoning_process": self.reasoning_trace,
+            "total_iterations": len([t for t in self.reasoning_trace if t["type"] in ["initial_research", "improvement_research"]]),
+            "quality_assurance": "Research completed through iterative reasoning and evaluation"
+        }
+        
+        return final_result
 
-# Example usage function  
-def run_icp_research(business_context):
+# Updated usage function for reasoning agent
+def run_reasoning_icp_research(business_context):
     """
-    Run comprehensive ICP research for a given business context using enhanced methodology
+    Run comprehensive ICP research using reasoning agent with iterative quality improvement
     """
-    icp_agent = ICPIntelligenceAgent()
+    reasoning_agent = ReasoningICPAgent()
     
-    # Create the research task
-    research_task = icp_agent.create_research_task(business_context)
+    # Execute reasoning-based research
+    result = reasoning_agent.reason_through_research(business_context)
     
-    # Create and run the crew
-    crew = Crew(
-        agents=[icp_agent.create_agent()],
-        tasks=[research_task],
-        verbose=True
-    )
-    
-    # Execute the research
-    result = crew.kickoff()
     return result

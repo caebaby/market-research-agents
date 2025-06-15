@@ -5,20 +5,42 @@ import os
 from typing import Dict, Any
 import json
 
-# Import our new agent
+# Flexible agent import with multiple fallback options
+AGENTS_AVAILABLE = False
+agent_function = None
+
+# Try multiple possible function names from your agent file
 try:
     from agents.icp_intelligence_agent import run_icp_research
+    agent_function = run_icp_research
     AGENTS_AVAILABLE = True
-except ImportError as e:
-    print(f"Agent import failed: {e}")
-    AGENTS_AVAILABLE = False
-    
-    def run_icp_research(context):
-        return "Agent system loading... Please try again in a moment."
+    print("✅ Successfully imported run_icp_research")
+except ImportError:
+    try:
+        from agents.icp_intelligence_agent import reasoning_agent_call
+        agent_function = reasoning_agent_call
+        AGENTS_AVAILABLE = True
+        print("✅ Successfully imported reasoning_agent_call")
+    except ImportError:
+        try:
+            from agents.icp_intelligence_agent import icp_analysis
+            agent_function = icp_analysis
+            AGENTS_AVAILABLE = True
+            print("✅ Successfully imported icp_analysis")
+        except ImportError as e:
+            print(f"❌ Agent import failed: {e}")
+            AGENTS_AVAILABLE = False
+            
+            def agent_function(context):
+                return {
+                    "error": "Agent system loading",
+                    "message": "Please try again in a moment",
+                    "context_received": True
+                }
 
 app = FastAPI(title="Market Research Agent Team", version="2.0.0")
 
-# Business context model (enhanced)
+# Data Models
 class BusinessContext(BaseModel):
     company_name: str
     industry: str
@@ -27,11 +49,10 @@ class BusinessContext(BaseModel):
     product_service: str = ""
     assumptions: str = ""
 
-# Simple comprehensive context model
 class SimpleBusinessContext(BaseModel):
     comprehensive_context: str
-    
-# In-memory storage for now (we'll add database later)
+
+# In-memory storage for research sessions
 research_sessions = {}
 
 @app.get("/")
@@ -39,96 +60,16 @@ async def root():
     return {
         "message": "Market Research Agent Team - Phase 2 Live! 🤖",
         "version": "2.0.0",
-        "status": "ICP Intelligence Agent Ready",
+        "status": "ICP Intelligence Agent Ready" if AGENTS_AVAILABLE else "Agent Loading",
+        "agents_available": AGENTS_AVAILABLE,
         "agents": [
-            "ICP Intelligence Agent ✅",
+            "ICP Intelligence Agent ✅" if AGENTS_AVAILABLE else "ICP Intelligence Agent 🔄",
             "Competitor Intelligence Agent (Coming Soon)",
             "Interview Simulation Agent (Coming Soon)", 
             "Marketing Intelligence Synthesizer (Coming Soon)"
         ]
     }
 
-@app.post("/research/icp-analysis")
-async def start_icp_research(context: BusinessContext):
-    """
-    Start ICP research using our AI agent
-    """
-    
-    # Generate session ID
-    session_id = f"icp_research_{len(research_sessions) + 1}"
-    
-    # Store initial context
-    research_sessions[session_id] = {
-        "status": "processing",
-        "business_context": context.dict(),
-        "agent_results": {},
-        "created_at": "2025-06-12"
-    }
-    
-    try:
-        # Run the ICP Intelligence Agent
-        print(f"🤖 Starting ICP research for {context.company_name}...")
-        
-        # Convert to dict for agent
-        business_dict = context.dict()
-        
-        # Run the agent (this will take 30-60 seconds)
-        icp_results = run_icp_research(business_dict)
-        
-        # Store results
-        research_sessions[session_id]["agent_results"]["icp_intelligence"] = str(icp_results)
-        research_sessions[session_id]["status"] = "completed"
-        
-        return {
-            "session_id": session_id,
-            "status": "completed",
-            "message": f"ICP research completed for {context.company_name}",
-            "results_preview": str(icp_results)[:500] + "...",
-            "full_results_url": f"/research/{session_id}/results"
-        }
-        
-    except Exception as e:
-        # Handle errors gracefully
-        research_sessions[session_id]["status"] = "error"
-        research_sessions[session_id]["error"] = str(e)
-        
-        return {
-            "session_id": session_id,
-            "status": "error",
-            "message": f"Error processing research: {str(e)}"
-        }
-
-@app.get("/research/{session_id}/results")
-async def get_research_results(session_id: str):
-    """
-    Get the full research results
-    """
-    if session_id not in research_sessions:
-        raise HTTPException(status_code=404, detail="Research session not found")
-    
-    session = research_sessions[session_id]
-    
-    return {
-        "session_id": session_id,
-        "status": session["status"],
-        "business_context": session["business_context"],
-        "agent_results": session.get("agent_results", {}),
-        "created_at": session["created_at"]
-    }
-
-# Health check for deployment
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "service": "market-research-agents", "phase": "2"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
-# Also add this model at the top with your other models (near BusinessContext)
-class SimpleBusinessContext(BaseModel):
-    comprehensive_context: str
-
-# Replace your entire @app.get("/test-form") function with this:
 @app.get("/test-form")
 async def comprehensive_research_form():
     """
@@ -325,8 +266,6 @@ Specific Questions: [Any particular insights you're looking for]
     """
     return HTMLResponse(content=html_content)
 
-# Add this new endpoint after your form function:
-# Add this new endpoint after your form function:
 @app.post("/research/context-analysis")
 async def context_analysis_research(context: SimpleBusinessContext):
     """
@@ -345,20 +284,49 @@ async def context_analysis_research(context: SimpleBusinessContext):
     }
     
     try:
-        # Create context for ICP research agent
-        enhanced_context = {
-            "company_name": "Comprehensive Analysis",
-            "industry": "Various",
-            "target_market": "To be determined from context",
-            "current_challenges": "To be analyzed from context",
-            "product_service": "Comprehensive context provided",
-            "assumptions": context.comprehensive_context
-        }
+        if not AGENTS_AVAILABLE:
+            return {
+                "session_id": session_id,
+                "status": "error",
+                "message": "Agent system not available. Check deployment logs for import errors."
+            }
         
-        print(f"🧠 Starting ICP research agent with comprehensive context...")
+        print(f"🧠 Starting reasoning agent with comprehensive context...")
         
-        # Run the reasoning agent
-        reasoning_results = run_icp_research(enhanced_context)
+        # Try different input formats based on what your agent expects
+        try:
+            # First try: dictionary format (most common)
+            enhanced_context = {
+                "company_name": "Comprehensive Analysis",
+                "industry": "Various",
+                "target_market": "To be determined from context",
+                "current_challenges": "To be analyzed from context",
+                "product_service": "Comprehensive context provided",
+                "assumptions": context.comprehensive_context
+            }
+            reasoning_results = agent_function(enhanced_context)
+            
+        except Exception as e1:
+            try:
+                # Second try: string format with prompt
+                prompt = f"""
+                Analyze this comprehensive business context and provide detailed ICP research:
+                
+                {context.comprehensive_context}
+                
+                Provide insights on:
+                - Target customer psychology and motivations
+                - Specific pain points and frustrations
+                - Desires and aspirations
+                - Voice of customer language
+                - Marketing recommendations
+                - Positioning strategies
+                """
+                reasoning_results = agent_function(prompt)
+                
+            except Exception as e2:
+                # Third try: just the raw context
+                reasoning_results = agent_function(context.comprehensive_context)
         
         # Store results
         research_sessions[session_id]["agent_results"]["reasoning_research"] = reasoning_results
@@ -368,8 +336,8 @@ async def context_analysis_research(context: SimpleBusinessContext):
             "session_id": session_id,
             "status": "completed",
             "message": "Comprehensive context analysis completed",
-            "reasoning_iterations": reasoning_results.get("total_iterations", 1) if isinstance(reasoning_results, dict) else 1,
-            "quality_assurance": "Research validated through iterative reasoning process",
+            "agents_available": AGENTS_AVAILABLE,
+            "context_length": len(context.comprehensive_context),
             "results_preview": str(reasoning_results)[:500] + "..." if len(str(reasoning_results)) > 500 else str(reasoning_results),
             "full_results": reasoning_results,
             "full_results_url": f"/research/{session_id}/results"
@@ -382,5 +350,93 @@ async def context_analysis_research(context: SimpleBusinessContext):
         return {
             "session_id": session_id,
             "status": "error",
-            "message": f"Error processing context analysis: {str(e)}"
+            "message": f"Error processing context analysis: {str(e)}",
+            "agents_available": AGENTS_AVAILABLE,
+            "troubleshooting": "Check deployment logs for agent import status"
         }
+
+@app.post("/research/icp-analysis")
+async def start_icp_research(context: BusinessContext):
+    """
+    Start ICP research using AI agent (legacy endpoint)
+    """
+    
+    # Generate session ID
+    session_id = f"icp_research_{len(research_sessions) + 1}"
+    
+    # Store initial context
+    research_sessions[session_id] = {
+        "status": "processing",
+        "business_context": context.dict(),
+        "agent_results": {},
+        "created_at": "2025-06-14"
+    }
+    
+    try:
+        if not AGENTS_AVAILABLE:
+            return {
+                "session_id": session_id,
+                "status": "error",
+                "message": "Agent system not available. Check deployment logs."
+            }
+        
+        print(f"🤖 Starting ICP research for {context.company_name}...")
+        
+        # Convert to dict for agent
+        business_dict = context.dict()
+        
+        # Run the agent
+        icp_results = agent_function(business_dict)
+        
+        # Store results
+        research_sessions[session_id]["agent_results"]["icp_intelligence"] = str(icp_results)
+        research_sessions[session_id]["status"] = "completed"
+        
+        return {
+            "session_id": session_id,
+            "status": "completed",
+            "message": f"ICP research completed for {context.company_name}",
+            "results_preview": str(icp_results)[:500] + "...",
+            "full_results_url": f"/research/{session_id}/results"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error processing research: {str(e)}"
+        }
+
+@app.get("/research/{session_id}/results")
+async def get_research_results(session_id: str):
+    """
+    Get the full research results
+    """
+    if session_id not in research_sessions:
+        raise HTTPException(status_code=404, detail="Research session not found")
+    
+    session = research_sessions[session_id]
+    
+    return {
+        "session_id": session_id,
+        "status": session["status"],
+        "business_context": session["business_context"],
+        "agent_results": session.get("agent_results", {}),
+        "created_at": session["created_at"]
+    }
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy", 
+        "service": "market-research-agents", 
+        "phase": "2",
+        "agents_available": AGENTS_AVAILABLE
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))

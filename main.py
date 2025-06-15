@@ -26,6 +26,10 @@ class BusinessContext(BaseModel):
     current_challenges: str
     product_service: str = ""
     assumptions: str = ""
+
+# Simple comprehensive context model
+class SimpleBusinessContext(BaseModel):
+    comprehensive_context: str
     
 # In-memory storage for now (we'll add database later)
 research_sessions = {}
@@ -120,78 +124,192 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+# Also add this model at the top with your other models (near BusinessContext)
+class SimpleBusinessContext(BaseModel):
+    comprehensive_context: str
+
+# Replace the entire @app.get("/test-form") function with this:
 @app.get("/test-form")
-async def test_form():
+async def comprehensive_research_form():
     """
-    Simple HTML form to test the ICP agent
+    Comprehensive single-box form for business context research
     """
     html_content = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Test ICP Intelligence Agent</title>
+        <title>🧠 Business Context Research - Reasoning Agent</title>
         <style>
-            body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
-            input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
-            button { background: #007cba; color: white; padding: 15px 30px; border: none; cursor: pointer; }
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 900px; 
+                margin: 30px auto; 
+                padding: 30px;
+                background-color: #f8fafc;
+            }
+            .container {
+                background: white;
+                padding: 40px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            h1 { 
+                color: #1e293b; 
+                border-bottom: 3px solid #3b82f6;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }
+            .description {
+                background: #eff6ff;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 25px;
+                border-left: 4px solid #3b82f6;
+            }
+            textarea { 
+                width: 100%; 
+                height: 450px; 
+                padding: 20px; 
+                font-size: 14px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                font-family: 'SF Mono', Monaco, monospace;
+                line-height: 1.5;
+                resize: vertical;
+            }
+            textarea:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            button { 
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                color: white; 
+                padding: 16px 32px; 
+                border: none; 
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                margin-top: 20px;
+                width: 100%;
+                transition: all 0.2s;
+            }
+            button:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            }
+            button:disabled {
+                background: #9ca3af;
+                transform: none;
+                box-shadow: none;
+            }
+            #results {
+                margin-top: 30px;
+                padding: 25px;
+                background: #f0f9ff;
+                border-radius: 8px;
+                border: 1px solid #0ea5e9;
+            }
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: #3b82f6;
+                font-weight: 600;
+            }
+            pre {
+                white-space: pre-wrap;
+                font-size: 13px;
+                max-height: 500px;
+                overflow-y: auto;
+            }
+            .example {
+                background: #fefce8;
+                padding: 15px;
+                border-radius: 6px;
+                margin: 15px 0;
+                font-size: 13px;
+                border-left: 3px solid #eab308;
+            }
         </style>
     </head>
     <body>
-        <h1>🤖 Test ICP Intelligence Agent</h1>
-        <form id="testForm">
-            <label>Company Name:</label>
-            <input type="text" id="company_name" value="Test Digital Agency" required>
+        <div class="container">
+            <h1>🧠 Comprehensive Business Research</h1>
             
-            <label>Industry:</label>
-            <input type="text" id="industry" value="Digital Marketing" required>
+            <div class="description">
+                <strong>Reasoning Agent:</strong> Advanced AI that iteratively improves research quality through self-evaluation and multiple reasoning cycles until professional consulting standards are met.
+                <br><br>
+                <strong>⏱️ Processing Time:</strong> 2-5 minutes (multiple iterations for quality assurance)
+            </div>
             
-            <label>Target Market:</label>
-            <input type="text" id="target_market" value="Small business owners who need help with online marketing" required>
+            <p><strong>Paste your complete business context below</strong> (like you would into ChatGPT):</p>
             
-            <label>Current Challenges:</label>
-            <textarea id="current_challenges" rows="3" required>Struggling to generate consistent leads and convert website visitors into customers</textarea>
+            <div class="example">
+                <strong>💡 Example format:</strong><br>
+                Company: [Name] - [Industry]<br>
+                Offering: [Detailed service/product description]<br>
+                Target Market: [Specific customer details]<br>
+                Current Challenges: [Market problems you solve]<br>
+                Marketing Goals: [What you want to achieve]<br>
+                Unique Value: [Differentiators vs competitors]<br>
+                Current Customers: [Existing customer insights]<br>
+                [Add any other relevant context...]
+            </div>
             
-            <label>Product/Service:</label>
-            <input type="text" id="product_service" value="Marketing consulting and lead generation services">
+            <form id="contextForm">
+                <textarea id="business_context" placeholder="Company: [Your company name and industry]
+Industry: [Specific industry/niche] 
+Offering: [Detailed description of your products/services, how they work, what problems they solve]
+Target Market: [Specific customer demographics, role, company size, industry focus]
+Current Challenges: [Specific problems your target market faces daily]
+Marketing Goals: [What you want to achieve - leads, awareness, positioning, etc.]
+Unique Value Proposition: [What makes you different from competitors]
+Current Customers: [What you know about existing customers - feedback, patterns, characteristics]
+Main Competitors: [Who you compete against and how you differ]
+Failed Marketing Attempts: [What hasn't worked and lessons learned]
+Market Position: [How you're positioned - premium, budget, niche expert, etc.]
+Specific Questions: [Any particular insights you're looking for]
+
+[Add any other relevant context about your business, market, customers, challenges, goals, etc.]" required></textarea>
+                
+                <button type="submit">🧠 Start Reasoning Agent Research</button>
+            </form>
             
-            <button type="submit">🚀 Run ICP Research</button>
-        </form>
-        
-        <div id="results" style="margin-top: 30px;"></div>
-        
+            <div id="results" style="display: none;"></div>
+        </div>
+
         <script>
-            document.getElementById('testForm').onsubmit = async function(e) {
+            document.getElementById('contextForm').onsubmit = async function(e) {
                 e.preventDefault();
                 
                 const button = document.querySelector('button');
                 const results = document.getElementById('results');
                 
-                button.textContent = '🤖 Agent Working...';
+                button.textContent = '🧠 Reasoning Agent Processing...';
                 button.disabled = true;
                 
+                results.style.display = 'block';
+                results.innerHTML = '<div class="loading">🧠 Reasoning Agent Working...<br><br>⚡ Multiple evaluation cycles in progress<br>📊 Iteratively improving research quality<br>🎯 Ensuring professional consulting standards</div>';
+                
                 const data = {
-                    company_name: document.getElementById('company_name').value,
-                    industry: document.getElementById('industry').value,
-                    target_market: document.getElementById('target_market').value,
-                    current_challenges: document.getElementById('current_challenges').value,
-                    product_service: document.getElementById('product_service').value,
-                    assumptions: ''
+                    comprehensive_context: document.getElementById('business_context').value
                 };
                 
                 try {
-                    const response = await fetch('/research/icp-analysis', {
+                    const response = await fetch('/research/context-analysis', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
                     
                     const result = await response.json();
-                    results.innerHTML = '<h3>Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    results.innerHTML = '<h3>🎉 Reasoning Agent Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
                 } catch (error) {
-                    results.innerHTML = '<h3>Error:</h3><p>' + error.message + '</p>';
+                    results.innerHTML = '<h3>❌ Error:</h3><p>' + error.message + '</p>';
                 }
                 
-                button.textContent = '🚀 Run ICP Research';
+                button.textContent = '🧠 Start Reasoning Agent Research';
                 button.disabled = false;
             };
         </script>
@@ -199,3 +317,61 @@ async def test_form():
     </html>
     """
     return HTMLResponse(content=html_content)
+
+# Add this new endpoint after the form function:
+@app.post("/research/context-analysis")
+async def context_analysis_research(context: SimpleBusinessContext):
+    """
+    Process comprehensive business context using reasoning agent
+    """
+    
+    # Generate session ID
+    session_id = f"context_research_{len(research_sessions) + 1}"
+    
+    # Store initial context
+    research_sessions[session_id] = {
+        "status": "processing",
+        "business_context": {"comprehensive_context": context.comprehensive_context},
+        "agent_results": {},
+        "created_at": "2025-06-13"
+    }
+    
+    try:
+        # Parse the comprehensive context into structured format for reasoning agent
+        enhanced_context = {
+            "company_name": "Context Analysis",  # Will be parsed from context
+            "industry": "Various",
+            "product_service": "Comprehensive context provided",
+            "target_market": "To be determined from context",
+            "current_challenges": "To be analyzed from context",
+            "comprehensive_context": context.comprehensive_context
+        }
+        
+        print(f"🧠 Starting reasoning agent with comprehensive context...")
+        
+        # Run the reasoning agent
+        reasoning_results = run_reasoning_icp_research(enhanced_context)
+        
+        # Store results
+        research_sessions[session_id]["agent_results"]["reasoning_research"] = reasoning_results
+        research_sessions[session_id]["status"] = "completed"
+        
+        return {
+            "session_id": session_id,
+            "status": "completed",
+            "message": "Comprehensive context analysis completed",
+            "reasoning_iterations": reasoning_results.get("total_iterations", 1) if isinstance(reasoning_results, dict) else 1,
+            "quality_assurance": "Research validated through iterative reasoning process",
+            "results_preview": str(reasoning_results)[:500] + "..." if len(str(reasoning_results)) > 500 else str(reasoning_results),
+            "full_results_url": f"/research/{session_id}/results"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error processing context analysis: {str(e)}"
+        }

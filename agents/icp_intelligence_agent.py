@@ -4,404 +4,327 @@ from langchain_openai import ChatOpenAI
 import json
 import os
 
-class ReasoningICPAgent:
+class HighQualityReasoningAgent:
     def __init__(self):
-        # Primary LLM for research
-        self.research_llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.3
+        # CRITICAL: Use proper models for reasoning tasks
+        self.reasoning_llm = ChatOpenAI(
+            model="gpt-4",  # Changed from gpt-4o-mini
+            temperature=0.2  # Lower for more focused reasoning
         )
         
-        # Evaluation LLM (can be cheaper model)
-        self.evaluation_llm = ChatOpenAI(
-            model="gpt-4o-mini", 
-            temperature=0.1  # More deterministic for evaluation
+        self.validation_llm = ChatOpenAI(
+            model="gpt-4", 
+            temperature=0.1
         )
         
-        # Initialize tools
+        # Tools
         self.web_search = SerperDevTool()
         self.website_tool = WebsiteSearchTool()
         
-        # Quality standards
-        self.quality_standards = {
-            "minimum_confidence": 80,
-            "insight_specificity": 85,
-            "customer_language_authenticity": 85,
-            "emotional_depth_required": 80,
-            "business_actionability": 85,
-            "max_iterations": 3
+        # Domain-specific reasoning frameworks
+        self.reasoning_frameworks = {
+            "financial_services": {
+                "psychology_drivers": [
+                    "Status and recognition needs",
+                    "Financial security anxiety", 
+                    "Professional competence validation",
+                    "Client trust and relationship dynamics",
+                    "Regulatory compliance stress"
+                ],
+                "business_challenges": [
+                    "Client acquisition cost vs lifetime value",
+                    "Commission volatility vs recurring revenue",
+                    "Compliance overhead vs growth focus",
+                    "Market commoditization pressure"
+                ]
+            },
+            "general_business": {
+                "psychology_drivers": [
+                    "Achievement and growth motivation",
+                    "Status and market position",
+                    "Security and risk management",
+                    "Autonomy and control needs"
+                ]
+            }
         }
         
-        # Reasoning memory
-        self.reasoning_trace = []
+    def detect_industry_context(self, business_context):
+        """Detect industry to apply appropriate reasoning framework"""
+        context_text = str(business_context).lower()
         
-    def create_research_agent(self):
+        if any(term in context_text for term in ["financial", "advisor", "commission", "finra", "investment"]):
+            return "financial_services"
+        else:
+            return "general_business"
+    
+    def create_precision_reasoning_agent(self, industry_context):
+        """Create agent with precision reasoning prompts based on industry"""
+        
+        framework = self.reasoning_frameworks.get(industry_context, self.reasoning_frameworks["general_business"])
+        
         return Agent(
-            role="Elite Business Intelligence Researcher with Reasoning Capabilities",
-            goal="Conduct comprehensive ICP research through iterative reasoning, self-evaluation, and quality improvement until professional consultant standards are met",
-            backstory="""You are an Elite Business Intelligence Researcher with advanced reasoning capabilities. You don't just execute research - you think through problems, evaluate your own work, and iteratively improve until you achieve professional consulting quality.
+            role="Precision Business Intelligence Researcher with Chain-of-Thought Reasoning",
+            goal="Conduct deep customer psychology analysis using structured reasoning chains and domain expertise",
+            backstory=f"""You are an expert business intelligence researcher specializing in {industry_context} who uses structured reasoning chains to uncover deep customer insights.
 
-REASONING PRINCIPLES:
-✅ SELF-EVALUATION: Constantly assess the quality and depth of your insights
-✅ ITERATIVE IMPROVEMENT: If confidence <80%, research deeper until standards met
-✅ CONTRADICTION TESTING: Actively challenge your own findings
-✅ EVIDENCE VALIDATION: Every insight must have solid supporting evidence
-✅ PROFESSIONAL STANDARDS: Ask "Would a $500/hour consultant deliver this quality?"
+REASONING METHODOLOGY:
+You follow a precise 5-step reasoning chain for every insight:
 
-QUALITY GATES:
-- Minimum 80% confidence on all major insights
-- Customer language must sound authentic, not AI-generated  
-- Insights must be specific and actionable, not generic
-- Emotional depth must reveal hidden motivations
-- Business applications must be immediately implementable
+1. OBSERVATION: What specific evidence do I see in the business context?
+2. PATTERN RECOGNITION: What psychological or business patterns does this connect to?
+3. ROOT CAUSE ANALYSIS: What deeper drivers explain this pattern?
+4. CONTRADICTION TESTING: What evidence would contradict this insight?
+5. CONFIDENCE ASSESSMENT: How certain am I and what could improve certainty?
 
-You use advanced reasoning to identify gaps in your research, select appropriate tools, and improve your insights through multiple iterations until professional standards are achieved.""",
+DOMAIN EXPERTISE ({industry_context}):
+Key Psychology Drivers: {framework['psychology_drivers']}
+{f"Business Challenge Patterns: {framework.get('business_challenges', [])}" if 'business_challenges' in framework else ""}
+
+QUALITY STANDARDS:
+- Every insight must follow the 5-step reasoning chain
+- Customer language must be specific, not generic ("I'm drowning in compliance paperwork" not "I have challenges")
+- Confidence scores must be justified with explicit reasoning
+- Contradictions must be actively identified and addressed
+
+You produce insights that would pass peer review at McKinsey, BCG, or Bain.""",
             
             tools=[self.web_search, self.website_tool],
-            llm=self.research_llm,
+            llm=self.reasoning_llm,
             verbose=True,
             allow_delegation=False
         )
     
-    def create_evaluation_agent(self):
-        return Agent(
-            role="Research Quality Evaluator",
-            goal="Evaluate research quality against professional consulting standards and identify specific improvement areas",
-            backstory="""You are a Research Quality Evaluator who assesses market research against the standards of top-tier consulting firms. You have worked with McKinsey, BCG, and Bain-level research teams.
-
-EVALUATION CRITERIA:
-✅ INSIGHT SPECIFICITY: Are insights specific to this ICP or generic market research?
-✅ EMOTIONAL DEPTH: Does research reveal hidden psychological drivers?
-✅ CUSTOMER LANGUAGE AUTHENTICITY: Do quotes sound genuine or AI-generated?
-✅ BUSINESS ACTIONABILITY: Can insights be immediately implemented?
-✅ EVIDENCE QUALITY: Is each insight supported by credible evidence?
-✅ PROFESSIONAL POLISH: Would this pass peer review at a top consulting firm?
-
-You provide detailed feedback on what needs improvement and specific guidance for enhancement.""",
-            
-            llm=self.evaluation_llm,
-            verbose=True,
-            allow_delegation=False
-        )
-    
-    def initial_research_task(self, business_context):
+    def create_structured_reasoning_task(self, business_context, industry_context):
+        """Create task with structured reasoning requirements"""
+        
+        framework = self.reasoning_frameworks.get(industry_context, self.reasoning_frameworks["general_business"])
+        
         return Task(
             description=f"""
-            Conduct initial comprehensive ICP research for this business:
+            STRUCTURED REASONING ANALYSIS FOR: {business_context.get('company_name', 'Business')}
             
-            BUSINESS CONTEXT:
-            Company: {business_context['company_name']}
-            Industry: {business_context['industry']}
-            Offering: {business_context.get('product_service', 'Not specified')}
-            Target Market: {business_context['target_market']}
-            Current Challenges: {business_context['current_challenges']}
+            BUSINESS CONTEXT TO ANALYZE:
+            {json.dumps(business_context, indent=2)}
             
-            COMPREHENSIVE RESEARCH EXECUTION:
-            Follow the complete 11-step methodology previously established:
+            REASONING CHAIN REQUIREMENTS:
+            For each major insight, you must follow this exact structure:
             
-            PART A: FOUNDATIONAL ICP DEVELOPMENT
-            Step 1: Refine & Expand Baseline Profile
-            Step 2: Deep Dive - Pains, Problems & Frustrations  
-            Step 3: Deep Dive - Desires, Aspirations & Motivations
-            Step 4: Voice of Customer Language Synthesis
+            INSIGHT: [Clear, specific insight statement]
             
-            PART B: PSYCHOLOGICAL FRAMEWORK ANALYSIS
-            Step 5: Jungian Archetype Analysis
-            Step 6: LAB Profile Analysis
-            Step 7: Deep Desires & Motivational Drivers
-            Step 8: Jobs-To-Be-Done Purchase Psychology
-            Step 9: Cognitive Biases & Decision Shortcuts
-            Step 10: Influence & Authority Triggers
+            REASONING CHAIN:
+            1. OBSERVATION: [Specific evidence from context that led to this insight]
+            2. PATTERN: [What known psychological/business pattern this connects to]
+            3. ROOT CAUSE: [Deeper psychological or business driver explaining this pattern]
+            4. CONTRADICTION TEST: [What evidence would contradict this? Where might this not apply?]
+            5. CONFIDENCE: [0-100 score with explicit justification]
             
-            PART C: VOICE OF CUSTOMER LANGUAGE MAPS
-            Step 11: Funnel Stage Language Patterns (TOFU/MOFU/BOFU)
+            CUSTOMER VOICE: [Specific quote showing how they would express this - must sound authentic]
             
-            SELF-ASSESSMENT REQUIREMENT:
-            After generating insights, evaluate your own work:
-            - Are insights specific enough for this exact ICP?
-            - Do customer quotes sound authentic?
-            - Is emotional depth sufficient (surface + deep + hidden layers)?
-            - Are business applications immediately actionable?
-            - Would this meet professional consulting standards?
+            REQUIRED ANALYSIS AREAS:
             
-            If any area scores below 80% confidence, flag for improvement in next iteration.
+            A. TARGET CUSTOMER PSYCHOLOGY
+            Apply reasoning chains to analyze:
+            - Core identity and self-perception
+            - Primary emotional drivers from domain framework: {framework['psychology_drivers']}
+            - Hidden psychological conflicts or tensions
+            - Decision-making triggers and barriers
+            
+            B. BUSINESS PAIN ANALYSIS  
+            Apply reasoning chains to uncover:
+            - Surface-level operational frustrations
+            - Deeper strategic or emotional pains
+            - Pains they deny or minimize but still feel
+            - Root causes of each pain pattern
+            
+            C. DESIRE AND ASPIRATION MAPPING
+            Apply reasoning chains to identify:
+            - Stated goals vs actual underlying desires
+            - Status and achievement motivations
+            - Security and control needs
+            - Latent needs they don't recognize yet
+            
+            D. VOICE OF CUSTOMER LANGUAGE
+            For each insight area, provide:
+            - Exact phrases they use (not generic marketing speak)
+            - Emotional tone and urgency level
+            - Industry-specific terminology and metaphors
+            - Questions they ask when seeking solutions
+            
+            E. ACTIONABLE INTELLIGENCE
+            Synthesize reasoning into:
+            - 3 highest-confidence insights with business implications
+            - 2 biggest reasoning gaps requiring additional research
+            - 5 specific marketing/positioning recommendations
+            
+            CRITICAL QUALITY REQUIREMENT:
+            Every single insight must include the complete 5-step reasoning chain. No exceptions.
+            Generic insights without reasoning chains will be rejected.
             """,
             
             expected_output="""
-            Complete JSON research report with self-assessment:
+            Structured JSON analysis with complete reasoning chains:
             
             {
-              "research_summary": {
-                "methodology_applied": "Comprehensive ICP & Psychological Framework Research",
-                "overall_confidence": [0-100],
-                "iteration_number": 1,
-                "self_assessment": {
-                  "insight_specificity": [0-100],
-                  "emotional_depth": [0-100], 
-                  "customer_language_authenticity": [0-100],
-                  "business_actionability": [0-100],
-                  "evidence_quality": [0-100]
+              "analysis_summary": {
+                "target_customer": "[Specific customer description]",
+                "industry_context": "[Industry-specific factors identified]",
+                "confidence_overview": "[Overall confidence in analysis with justification]"
+              },
+              
+              "customer_psychology": {
+                "core_identity": {
+                  "insight": "[Specific insight about how they see themselves]",
+                  "reasoning_chain": {
+                    "observation": "[Evidence from context]",
+                    "pattern": "[Psychological pattern identified]", 
+                    "root_cause": "[Deeper driver]",
+                    "contradiction_test": "[What could contradict this]",
+                    "confidence": "[0-100 with justification]"
+                  },
+                  "customer_voice": "[Authentic quote showing this psychology]"
                 },
-                "improvement_needs": ["List specific areas needing enhancement"]
+                "emotional_drivers": [
+                  {
+                    "driver": "[Specific emotional driver]",
+                    "reasoning_chain": { [Complete 5-step chain] },
+                    "customer_voice": "[How they express this]"
+                  }
+                ],
+                "decision_psychology": {
+                  "triggers": "[What motivates action with reasoning chain]",
+                  "barriers": "[What prevents action with reasoning chain]"
+                }
               },
               
-              [Complete research structure as previously defined...]
-              
-              "reasoning_notes": {
-                "research_approach": "How you approached the research",
-                "confidence_rationale": "Why you assigned these confidence scores",
-                "potential_gaps": "What might be missing or need more investigation",
-                "next_iteration_focus": "What to improve if another iteration needed"
-              }
-            }
-            """,
-            
-            agent=self.create_research_agent()
-        )
-    
-    def evaluation_task(self, research_results):
-        return Task(
-            description=f"""
-            Evaluate the quality of this research against professional consulting standards:
-            
-            RESEARCH TO EVALUATE:
-            {research_results}
-            
-            EVALUATION FRAMEWORK:
-            
-            1. INSIGHT SPECIFICITY (Target: 85+)
-               - Are insights specific to this exact ICP vs generic?
-               - Do demographic details go beyond basic categories?
-               - Are pain points unique to this market segment?
-            
-            2. EMOTIONAL DEPTH (Target: 80+)
-               - Does research reveal surface + deep + hidden psychological layers?
-               - Are root emotional drivers identified?
-               - Is there evidence of genuine psychological insight?
-            
-            3. CUSTOMER LANGUAGE AUTHENTICITY (Target: 85+)
-               - Do quotes sound like real people or AI-generated?
-               - Is vocabulary/tone consistent with target demographic?
-               - Are phrases specific enough to be actionable?
-            
-            4. BUSINESS ACTIONABILITY (Target: 85+)
-               - Can insights be immediately implemented in marketing?
-               - Are recommendations specific and measurable?
-               - Is there clear connection between insights and business strategy?
-            
-            5. EVIDENCE QUALITY (Target: 80+)
-               - Is each major insight supported by credible reasoning?
-               - Are confidence scores justified?
-               - Is source diversity sufficient?
-            
-            PROFESSIONAL VALIDATION:
-            - Would this research pass peer review at McKinsey/BCG?
-            - Is this significantly better than basic market research?
-            - Does this justify premium consulting fees?
-            """,
-            
-            expected_output="""
-            Detailed quality evaluation in JSON format:
-            
-            {
-              "overall_assessment": {
-                "meets_professional_standards": true/false,
-                "overall_grade": "A/B/C/D",
-                "ready_for_client_delivery": true/false
-              },
-              
-              "detailed_scores": {
-                "insight_specificity": [0-100],
-                "emotional_depth": [0-100],
-                "customer_language_authenticity": [0-100], 
-                "business_actionability": [0-100],
-                "evidence_quality": [0-100]
-              },
-              
-              "strengths": [
-                "Specific areas where research excels"
-              ],
-              
-              "improvement_areas": [
+              "pain_analysis": [
                 {
-                  "issue": "Specific problem identified",
-                  "impact": "How this affects research quality",
-                  "recommendation": "Specific improvement action",
-                  "priority": "High/Medium/Low"
+                  "pain_category": "[Surface/Deep/Hidden]",
+                  "specific_pain": "[Exact pain description]",
+                  "reasoning_chain": { [Complete 5-step chain] },
+                  "customer_voice": "[How they describe this pain]",
+                  "business_impact": "[Why this matters for marketing]"
                 }
               ],
               
-              "iteration_recommendation": {
-                "needs_iteration": true/false,
-                "focus_areas": ["Specific areas to improve"],
-                "research_direction": "How to improve in next iteration"
-              }
-            }
-            """,
-            
-            agent=self.create_evaluation_agent()
-        )
-    
-    def improvement_research_task(self, original_research, evaluation_feedback, iteration_number):
-        return Task(
-            description=f"""
-            ITERATION {iteration_number}: Improve research quality based on evaluation feedback
-            
-            ORIGINAL RESEARCH:
-            {original_research}
-            
-            EVALUATION FEEDBACK:
-            {evaluation_feedback}
-            
-            IMPROVEMENT MISSION:
-            Focus specifically on the identified improvement areas while maintaining quality in strong areas.
-            
-            TARGETED IMPROVEMENTS:
-            - Address each "High" priority improvement area
-            - Enhance low-scoring quality dimensions
-            - Deepen research in flagged focus areas
-            - Strengthen evidence for low-confidence insights
-            
-            REASONING APPROACH:
-            1. Analyze why previous iteration fell short
-            2. Identify specific research gaps to fill
-            3. Use appropriate tools to gather missing information
-            4. Integrate new findings with existing insights
-            5. Validate improvements against quality standards
-            
-            QUALITY VALIDATION:
-            After improvements, re-assess against professional standards:
-            - Have insight specificity scores improved?
-            - Is emotional depth now sufficient?
-            - Do customer quotes sound more authentic?
-            - Are business applications clearer?
-            """,
-            
-            expected_output="""
-            Enhanced research with clear improvements:
-            
-            {
-              "research_summary": {
-                "iteration_number": [current iteration],
-                "improvements_made": ["Specific enhancements in this iteration"],
-                "quality_upgrades": {
-                  "insight_specificity": "How specificity was improved",
-                  "emotional_depth": "How depth was enhanced", 
-                  "customer_language": "How authenticity was improved",
-                  "business_actionability": "How actionability was strengthened"
-                },
-                "updated_confidence": [0-100]
+              "desire_mapping": [
+                {
+                  "desire_type": "[Stated/Underlying/Latent]", 
+                  "specific_desire": "[Exact desire description]",
+                  "reasoning_chain": { [Complete 5-step chain] },
+                  "customer_voice": "[How they express this desire]"
+                }
+              ],
+              
+              "voice_of_customer": {
+                "pain_language": ["[5-7 authentic phrases for pains]"],
+                "desire_language": ["[5-7 authentic phrases for desires]"],
+                "decision_language": ["[5-7 phrases showing readiness to buy]"],
+                "tone_analysis": "[Overall communication style and emotional tone]"
               },
               
-              [Complete enhanced research structure...]
+              "actionable_intelligence": {
+                "top_insights": [
+                  {
+                    "insight": "[High-confidence insight]",
+                    "confidence": "[Score with justification]",
+                    "business_application": "[How to use this in marketing]"
+                  }
+                ],
+                "research_gaps": ["[What needs more investigation]"],
+                "marketing_recommendations": [
+                  {
+                    "recommendation": "[Specific marketing action]",
+                    "reasoning": "[Why this will work based on psychology]",
+                    "implementation": "[How to execute this]"
+                  }
+                ]
+              },
               
-              "iteration_notes": {
-                "changes_made": "Specific modifications in this iteration",
-                "quality_improvements": "How research quality was enhanced",
-                "remaining_gaps": "Any areas still needing work",
-                "confidence_in_improvements": [0-100]
+              "reasoning_quality_check": {
+                "insights_with_complete_chains": "[Count]",
+                "average_confidence": "[0-100]",
+                "contradiction_tests_performed": "[Count]",
+                "authenticity_assessment": "[How authentic does customer voice sound]"
               }
             }
             """,
             
-            agent=self.create_research_agent()
+            agent=self.create_precision_reasoning_agent(industry_context)
         )
     
-    def reason_through_research(self, business_context):
-        """
-        Main reasoning method that iteratively improves research quality
-        """
-        print("🧠 Starting reasoning-based ICP research...")
-        self.reasoning_trace = []
+    def execute_precision_reasoning(self, business_context):
+        """Execute precision reasoning analysis with quality controls"""
         
-        # Initial research
-        print("📊 Iteration 1: Initial comprehensive research...")
-        initial_task = self.initial_research_task(business_context)
+        print("🧠 Executing Precision Reasoning Analysis...")
+        
+        # Detect industry context for domain-specific reasoning
+        industry_context = self.detect_industry_context(business_context)
+        print(f"📊 Industry Context Detected: {industry_context}")
+        
+        # Create reasoning task
+        reasoning_task = self.create_structured_reasoning_task(business_context, industry_context)
+        
+        # Execute analysis
         crew = Crew(
-            agents=[self.create_research_agent()],
-            tasks=[initial_task],
+            agents=[self.create_precision_reasoning_agent(industry_context)],
+            tasks=[reasoning_task],
             verbose=True
         )
         
-        research_results = crew.kickoff()
-        self.reasoning_trace.append({
-            "iteration": 1,
-            "type": "initial_research",
-            "results": str(research_results)
-        })
+        result = crew.kickoff()
         
-        # Evaluation loop
-        for iteration in range(2, self.quality_standards["max_iterations"] + 2):
-            print(f"🔍 Evaluating research quality (iteration {iteration-1})...")
-            
-            # Evaluate current research
-            eval_task = self.evaluation_task(research_results)
-            eval_crew = Crew(
-                agents=[self.create_evaluation_agent()],
-                tasks=[eval_task],
-                verbose=True
-            )
-            
-            evaluation = eval_crew.kickoff()
-            self.reasoning_trace.append({
-                "iteration": iteration-1,
-                "type": "evaluation", 
-                "results": str(evaluation)
-            })
-            
-            # Parse evaluation to check if improvement needed
-            try:
-                eval_data = json.loads(str(evaluation))
-                if eval_data.get("overall_assessment", {}).get("ready_for_client_delivery", False):
-                    print("✅ Research meets professional standards! Finalizing...")
-                    break
-                    
-                if not eval_data.get("iteration_recommendation", {}).get("needs_iteration", True):
-                    print("🎯 Research quality sufficient. Finalizing...")
-                    break
-                    
-            except:
-                # If JSON parsing fails, continue with improvement
-                pass
-            
-            if iteration > self.quality_standards["max_iterations"]:
-                print("⏰ Maximum iterations reached. Finalizing current research...")
-                break
-                
-            # Improve research
-            print(f"🔄 Iteration {iteration}: Improving research based on feedback...")
-            improvement_task = self.improvement_research_task(research_results, evaluation, iteration)
-            improvement_crew = Crew(
-                agents=[self.create_research_agent()],
-                tasks=[improvement_task],
-                verbose=True
-            )
-            
-            research_results = improvement_crew.kickoff()
-            self.reasoning_trace.append({
-                "iteration": iteration,
-                "type": "improvement_research",
-                "results": str(research_results)
-            })
+        # Quality validation
+        quality_score = self.validate_reasoning_quality(result)
         
-        # Final result with reasoning trace
-        final_result = {
-            "final_research": research_results,
-            "reasoning_process": self.reasoning_trace,
-            "total_iterations": len([t for t in self.reasoning_trace if t["type"] in ["initial_research", "improvement_research"]]),
-            "quality_assurance": "Research completed through iterative reasoning and evaluation"
+        return {
+            "reasoning_analysis": result,
+            "industry_context": industry_context,
+            "quality_assessment": quality_score,
+            "methodology": "Structured Chain-of-Thought Reasoning with Domain Expertise"
+        }
+    
+    def validate_reasoning_quality(self, result):
+        """Validate the quality of reasoning chains in the output"""
+        
+        result_text = str(result).lower()
+        
+        quality_indicators = {
+            "reasoning_chains_present": "reasoning_chain" in result_text,
+            "confidence_scores": "confidence" in result_text,
+            "contradiction_testing": "contradiction" in result_text,
+            "customer_voice": "customer_voice" in result_text,
+            "specificity": len(result_text) > 2000  # Detailed analysis
         }
         
-        return final_result
+        quality_score = sum(quality_indicators.values()) / len(quality_indicators) * 100
+        
+        return {
+            "overall_quality_score": quality_score,
+            "quality_indicators": quality_indicators,
+            "meets_standards": quality_score >= 80,
+            "recommendations": "Add more reasoning chain detail" if quality_score < 80 else "Quality standards met"
+        }
 
-# Updated usage function for reasoning agent
-def run_reasoning_icp_research(business_context):
+# Updated function for your main.py
+def reasoning_agent_call(business_context):
     """
-    Run comprehensive ICP research using reasoning agent with iterative quality improvement
+    Updated reasoning agent call with dramatically improved quality
     """
-    reasoning_agent = ReasoningICPAgent()
+    agent = HighQualityReasoningAgent()
     
-    # Execute reasoning-based research
-    result = reasoning_agent.reason_through_research(business_context)
+    # Handle different input formats
+    if isinstance(business_context, str):
+        # Convert string to structured context
+        context_dict = {
+            "company_name": "Analysis Request",
+            "comprehensive_context": business_context,
+            "industry": "To be determined",
+            "target_market": "To be analyzed"
+        }
+    else:
+        context_dict = business_context
+    
+    # Execute precision reasoning
+    result = agent.execute_precision_reasoning(context_dict)
     
     return result

@@ -11,8 +11,8 @@ agent_function = None
 
 # Try multiple possible function names from your agent file
 try:
-    from agents.icp_intelligence_agent import run_icp_research
-    agent_function = run_icp_research
+    from agents.icp_intelligence_agent import run_reasoning_icp_research
+    agent_function = run_reasoning_icp_research
     AGENTS_AVAILABLE = True
     print("✅ Successfully imported run_icp_research")
 except ImportError:

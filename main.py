@@ -128,7 +128,7 @@ if __name__ == "__main__":
 class SimpleBusinessContext(BaseModel):
     comprehensive_context: str
 
-# Replace the entire @app.get("/test-form") function with this:
+# Replace your entire @app.get("/test-form") function with this:
 @app.get("/test-form")
 async def comprehensive_research_form():
     """
@@ -176,6 +176,7 @@ async def comprehensive_research_form():
                 font-family: 'SF Mono', Monaco, monospace;
                 line-height: 1.5;
                 resize: vertical;
+                box-sizing: border-box;
             }
             textarea:focus {
                 outline: none;
@@ -203,6 +204,7 @@ async def comprehensive_research_form():
                 background: #9ca3af;
                 transform: none;
                 box-shadow: none;
+                cursor: not-allowed;
             }
             #results {
                 margin-top: 30px;
@@ -210,6 +212,7 @@ async def comprehensive_research_form():
                 background: #f0f9ff;
                 border-radius: 8px;
                 border: 1px solid #0ea5e9;
+                display: none;
             }
             .loading {
                 text-align: center;
@@ -222,6 +225,10 @@ async def comprehensive_research_form():
                 font-size: 13px;
                 max-height: 500px;
                 overflow-y: auto;
+                background: white;
+                padding: 15px;
+                border-radius: 6px;
+                border: 1px solid #e5e7eb;
             }
             .example {
                 background: #fefce8;
@@ -276,7 +283,7 @@ Specific Questions: [Any particular insights you're looking for]
                 <button type="submit">🧠 Start Reasoning Agent Research</button>
             </form>
             
-            <div id="results" style="display: none;"></div>
+            <div id="results"></div>
         </div>
 
         <script>
@@ -318,7 +325,7 @@ Specific Questions: [Any particular insights you're looking for]
     """
     return HTMLResponse(content=html_content)
 
-# Add this new endpoint after the form function:
+# Add this new endpoint after your form function:
 @app.post("/research/context-analysis")
 async def context_analysis_research(context: SimpleBusinessContext):
     """
@@ -333,7 +340,7 @@ async def context_analysis_research(context: SimpleBusinessContext):
         "status": "processing",
         "business_context": {"comprehensive_context": context.comprehensive_context},
         "agent_results": {},
-        "created_at": "2025-06-13"
+        "created_at": "2025-06-14"
     }
     
     try:

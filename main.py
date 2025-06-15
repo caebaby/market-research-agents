@@ -326,6 +326,7 @@ Specific Questions: [Any particular insights you're looking for]
     return HTMLResponse(content=html_content)
 
 # Add this new endpoint after your form function:
+# Add this new endpoint after your form function:
 @app.post("/research/context-analysis")
 async def context_analysis_research(context: SimpleBusinessContext):
     """
@@ -344,26 +345,20 @@ async def context_analysis_research(context: SimpleBusinessContext):
     }
     
     try:
-        # Parse the comprehensive context into structured format for reasoning agent
+        # Create context for ICP research agent
         enhanced_context = {
-            "company_name": "Context Analysis",  # Will be parsed from context
+            "company_name": "Comprehensive Analysis",
             "industry": "Various",
-            "product_service": "Comprehensive context provided",
             "target_market": "To be determined from context",
             "current_challenges": "To be analyzed from context",
-            "comprehensive_context": context.comprehensive_context
+            "product_service": "Comprehensive context provided",
+            "assumptions": context.comprehensive_context
         }
         
-        print(f"🧠 Starting reasoning agent with comprehensive context...")
+        print(f"🧠 Starting ICP research agent with comprehensive context...")
         
         # Run the reasoning agent
-        reasoning_results = reasoning_agent_call(f"""
-Analyze this comprehensive business context and provide detailed ICP research:
-
-{context.comprehensive_context}
-
-Provide insights on target customer psychology, pain points, desires, and marketing recommendations.
-""")
+        reasoning_results = run_icp_research(enhanced_context)
         
         # Store results
         research_sessions[session_id]["agent_results"]["reasoning_research"] = reasoning_results
@@ -376,6 +371,7 @@ Provide insights on target customer psychology, pain points, desires, and market
             "reasoning_iterations": reasoning_results.get("total_iterations", 1) if isinstance(reasoning_results, dict) else 1,
             "quality_assurance": "Research validated through iterative reasoning process",
             "results_preview": str(reasoning_results)[:500] + "..." if len(str(reasoning_results)) > 500 else str(reasoning_results),
+            "full_results": reasoning_results,
             "full_results_url": f"/research/{session_id}/results"
         }
         

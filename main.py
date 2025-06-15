@@ -357,7 +357,13 @@ async def context_analysis_research(context: SimpleBusinessContext):
         print(f"🧠 Starting reasoning agent with comprehensive context...")
         
         # Run the reasoning agent
-        reasoning_results = run_reasoning_icp_research(enhanced_context)
+        reasoning_results = reasoning_agent_call(f"""
+Analyze this comprehensive business context and provide detailed ICP research:
+
+{context.comprehensive_context}
+
+Provide insights on target customer psychology, pain points, desires, and marketing recommendations.
+""")
         
         # Store results
         research_sessions[session_id]["agent_results"]["reasoning_research"] = reasoning_results

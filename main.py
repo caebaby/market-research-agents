@@ -73,18 +73,18 @@ async def root():
 @app.get("/test-form")
 async def comprehensive_research_form():
     """
-    Comprehensive single-box form for business context research
+    Enhanced business context collection form
     """
     html_content = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>🧠 Business Context Research - Reasoning Agent</title>
+        <title>🎯 Business Context for ICP Research</title>
         <style>
             body { 
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 max-width: 900px; 
-                margin: 30px auto; 
+                margin: 20px auto; 
                 padding: 30px;
                 background-color: #f8fafc;
             }
@@ -98,42 +98,66 @@ async def comprehensive_research_form():
                 color: #1e293b; 
                 border-bottom: 3px solid #3b82f6;
                 padding-bottom: 15px;
-                margin-bottom: 20px;
+                margin-bottom: 30px;
             }
-            .description {
-                background: #eff6ff;
-                padding: 20px;
+            .section {
+                background: #f8fafc;
+                padding: 25px;
                 border-radius: 8px;
                 margin-bottom: 25px;
                 border-left: 4px solid #3b82f6;
             }
-            textarea { 
-                width: 100%; 
-                height: 450px; 
-                padding: 20px; 
-                font-size: 14px;
+            .section h3 {
+                color: #1e293b;
+                margin-top: 0;
+                margin-bottom: 15px;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #374151;
+            }
+            input, textarea, select {
+                width: 100%;
+                padding: 12px;
                 border: 2px solid #e5e7eb;
-                border-radius: 8px;
-                font-family: 'SF Mono', Monaco, monospace;
-                line-height: 1.5;
-                resize: vertical;
+                border-radius: 6px;
+                font-size: 14px;
                 box-sizing: border-box;
             }
-            textarea:focus {
+            input:focus, textarea:focus, select:focus {
                 outline: none;
                 border-color: #3b82f6;
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             }
-            button { 
+            textarea {
+                height: 120px;
+                resize: vertical;
+            }
+            .radio-group {
+                display: flex;
+                gap: 20px;
+                margin-top: 8px;
+            }
+            .radio-option {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            button {
                 background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                color: white; 
-                padding: 16px 32px; 
-                border: none; 
+                color: white;
+                padding: 16px 32px;
+                border: none;
                 border-radius: 8px;
                 cursor: pointer;
                 font-size: 16px;
                 font-weight: 600;
-                margin-top: 20px;
+                margin-top: 30px;
                 width: 100%;
                 transition: all 0.2s;
             }
@@ -141,11 +165,26 @@ async def comprehensive_research_form():
                 transform: translateY(-1px);
                 box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
             }
-            button:disabled {
-                background: #9ca3af;
-                transform: none;
-                box-shadow: none;
-                cursor: not-allowed;
+            .help-text {
+                font-size: 12px;
+                color: #6b7280;
+                margin-top: 4px;
+                font-style: italic;
+            }
+            .example {
+                background: #fefce8;
+                padding: 12px;
+                border-radius: 4px;
+                margin-top: 8px;
+                font-size: 13px;
+                border-left: 3px solid #eab308;
+            }
+            .process-flow {
+                background: #eff6ff;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 25px;
+                border-left: 4px solid #3b82f6;
             }
             #results {
                 margin-top: 30px;
@@ -171,189 +210,241 @@ async def comprehensive_research_form():
                 border-radius: 6px;
                 border: 1px solid #e5e7eb;
             }
-            .example {
-                background: #fefce8;
-                padding: 15px;
-                border-radius: 6px;
-                margin: 15px 0;
-                font-size: 13px;
-                border-left: 3px solid #eab308;
-            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>🧠 Comprehensive Business Research</h1>
+            <h1>🎯 Business Context for ICP Research</h1>
             
-            <div class="description">
-                <strong>Reasoning Agent:</strong> Advanced AI that iteratively improves research quality through self-evaluation and multiple reasoning cycles until professional consulting standards are met.
-                <br><br>
-                <strong>⏱️ Processing Time:</strong> 2-5 minutes (multiple iterations for quality assurance)
+            <div class="process-flow">
+                <h3>🔄 Research Process Flow</h3>
+                <p><strong>Step 1:</strong> You provide basic business context (what you know)</p>
+                <p><strong>Step 2:</strong> Research agent discovers deep insights (hidden pain, psychology, objections)</p>
+                <p><strong>Step 3:</strong> Interview agent validates and deepens research through conversation simulation</p>
+                <p><strong>Step 4:</strong> Marketing intelligence ready for campaign creation</p>
             </div>
             
-            <p><strong>Paste your complete business context below</strong> (like you would into ChatGPT):</p>
-            
-            <div class="example">
-                <strong>💡 Example format:</strong><br>
-                Company: [Name] - [Industry]<br>
-                Offering: [Detailed service/product description]<br>
-                Target Market: [Specific customer details]<br>
-                Current Challenges: [Market problems you solve]<br>
-                Marketing Goals: [What you want to achieve]<br>
-                Unique Value: [Differentiators vs competitors]<br>
-                Current Customers: [Existing customer insights]<br>
-                [Add any other relevant context...]
-            </div>
-            
-            <form id="contextForm">
-                <textarea id="business_context" placeholder="Company: [Your company name and industry]
-Industry: [Specific industry/niche] 
-Offering: [Detailed description of your products/services, how they work, what problems they solve]
-Target Market: [Specific customer demographics, role, company size, industry focus]
-Current Challenges: [Specific problems your target market faces daily]
-Marketing Goals: [What you want to achieve - leads, awareness, positioning, etc.]
-Unique Value Proposition: [What makes you different from competitors]
-Current Customers: [What you know about existing customers - feedback, patterns, characteristics]
-Main Competitors: [Who you compete against and how you differ]
-Failed Marketing Attempts: [What hasn't worked and lessons learned]
-Market Position: [How you're positioned - premium, budget, niche expert, etc.]
-Specific Questions: [Any particular insights you're looking for]
+            <form id="icpForm">
+                <!-- SECTION 1: BUSINESS BASICS -->
+                <div class="section">
+                    <h3>📊 Business Basics</h3>
+                    
+                    <div class="form-group">
+                        <label>Business Type</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="b2b" name="business_type" value="B2B" required>
+                                <label for="b2b">B2B (Business-to-Business)</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="b2c" name="business_type" value="B2C" required>
+                                <label for="b2c">B2C (Business-to-Consumer)</label>
+                            </div>
+                        </div>
+                    </div>
 
-[Add any other relevant context about your business, market, customers, challenges, goals, etc.]" required></textarea>
-                
-                <button type="submit">🧠 Start Reasoning Agent Research</button>
+                    <div class="form-group">
+                        <label for="company_name">Company Name</label>
+                        <input type="text" id="company_name" name="company_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="industry">Industry</label>
+                        <input type="text" id="industry" name="industry" placeholder="e.g., Financial Services, Health & Wellness, Technology" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="offering">Product/Service Description</label>
+                        <textarea id="offering" name="offering" placeholder="Describe what you offer and what problems it solves" required></textarea>
+                        <div class="example">Example: "4-pillar business support system for financial advisors including recurring revenue model, compliance resources, advisor network, and client-centric culture training"</div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: TARGET CUSTOMER (WHAT YOU KNOW) -->
+                <div class="section">
+                    <h3>👥 Target Customer (What You Know)</h3>
+                    
+                    <div class="form-group">
+                        <label for="target_customer">Target Customer Description</label>
+                        <input type="text" id="target_customer" name="target_customer" required>
+                        <div class="help-text" id="customer_help_text">Who is your ideal customer?</div>
+                        <div class="example" id="customer_example">Example: "Mid-career financial advisors with 5-10 years experience"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="demographics">Demographics & Basic Characteristics</label>
+                        <textarea id="demographics" name="demographics" required></textarea>
+                        <div class="help-text" id="demographics_help">Basic demographic info you know about them</div>
+                        <div class="example" id="demographics_example">Example: "Age 30-55, mostly married, college-educated, earning $75K-$150K annually"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="context_situation">Their Role/Life Context</label>
+                        <textarea id="context_situation" name="context_situation" required></textarea>
+                        <div class="help-text" id="context_help">What defines their professional role or life situation</div>
+                        <div class="example" id="context_example">Example: "Managing financial advisory practices with client relationships and compliance requirements"</div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: BUSINESS CHALLENGES (WHAT YOU OBSERVE) -->
+                <div class="section">
+                    <h3>😤 Business Challenges You Solve</h3>
+                    
+                    <div class="form-group">
+                        <label for="problems_you_solve">Problems Your Offering Solves</label>
+                        <textarea id="problems_you_solve" name="problems_you_solve" required></textarea>
+                        <div class="help-text">What business problems does your product/service address?</div>
+                        <div class="example">Example: "Commission income volatility, practice management inefficiencies, professional isolation, compliance burden"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customer_complaints">Common Complaints You Hear</label>
+                        <textarea id="customer_complaints" name="customer_complaints"></textarea>
+                        <div class="help-text">What do prospects and customers typically complain about in your industry?</div>
+                        <div class="example">Example: "Too much paperwork", "Income unpredictability", "Feeling like salespeople rather than advisors"</div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: GOALS & MOTIVATIONS (WHAT THEY SAY) -->
+                <div class="section">
+                    <h3>🎯 Customer Goals (What They Tell You)</h3>
+                    
+                    <div class="form-group">
+                        <label for="stated_goals">Goals They Openly State</label>
+                        <textarea id="stated_goals" name="stated_goals" required></textarea>
+                        <div class="help-text">What do they say they want to achieve?</div>
+                        <div class="example">Example: "Grow practice revenue", "Improve work-life balance", "Provide better client service"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="success_looks_like">What Success Looks Like (Their Words)</label>
+                        <textarea id="success_looks_like" name="success_looks_like"></textarea>
+                        <div class="help-text">How do they describe success when they talk about it?</div>
+                        <div class="example">Example: "Consistent $200K income", "Working reasonable hours", "Clients referring friends"</div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: BUSINESS CONTEXT -->
+                <div class="section">
+                    <h3>🏢 Business Context</h3>
+                    
+                    <div class="form-group">
+                        <label for="target_market">Target Market Details</label>
+                        <textarea id="target_market" name="target_market"></textarea>
+                        <div class="help-text">Additional context about your target market</div>
+                        <div class="example" id="market_example">Example: "Financial advisors at regional firms (50-500 employees) who are stuck at income plateau"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="marketing_goal">Primary Marketing Goal</label>
+                        <textarea id="marketing_goal" name="marketing_goal" required></textarea>
+                        <div class="help-text">What do you want to achieve with marketing campaigns?</div>
+                        <div class="example">Example: "Generate qualified leads for demo calls", "Increase conversion rate from prospect to customer"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="additional_context">Additional Context</label>
+                        <textarea id="additional_context" name="additional_context"></textarea>
+                        <div class="help-text">Any other relevant business context, competitive landscape, or customer insights</div>
+                    </div>
+                </div>
+
+                <button type="submit">🧠 Start Research → Interview Intelligence</button>
             </form>
             
             <div id="results"></div>
         </div>
 
         <script>
-            document.getElementById('contextForm').onsubmit = async function(e) {
+            // Update form labels and examples based on B2B vs B2C selection
+            document.querySelectorAll('input[name="business_type"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateFormForBusinessType(this.value);
+                });
+            });
+
+            function updateFormForBusinessType(businessType) {
+                const isB2C = businessType === 'B2C';
+                
+                const customerLabel = document.querySelector('label[for="target_customer"]');
+                const customerHelp = document.getElementById('customer_help_text');
+                const customerExample = document.getElementById('customer_example');
+                const demographicsHelp = document.getElementById('demographics_help');
+                const demographicsExample = document.getElementById('demographics_example');
+                const contextHelp = document.getElementById('context_help');
+                const contextExample = document.getElementById('context_example');
+                const marketExample = document.getElementById('market_example');
+                
+                if (isB2C) {
+                    customerLabel.textContent = 'Target Customer Type';
+                    customerHelp.textContent = 'What type of consumer do you serve?';
+                    customerExample.innerHTML = 'Example: "Busy professional women with young children" or "Health-conscious millennials"';
+                    
+                    demographicsHelp.textContent = 'Basic demographics you know about your customers';
+                    demographicsExample.innerHTML = 'Example: "Age 28-45, mostly married with kids, household income $60K-$120K, suburban areas"';
+                    
+                    contextHelp.textContent = 'Their lifestyle situation and daily context';
+                    contextExample.innerHTML = 'Example: "Juggling full-time careers with family responsibilities, limited personal time for self-care"';
+                    
+                    marketExample.innerHTML = 'Example: "Working moms in suburban areas who value convenience and quality over price"';
+                } else {
+                    customerLabel.textContent = 'Target Customer Role/Title';
+                    customerHelp.textContent = 'What professional role or job title do you target?';
+                    customerExample.innerHTML = 'Example: "Mid-career financial advisors with 5-10 years experience"';
+                    
+                    demographicsHelp.textContent = 'Professional demographics and company characteristics';
+                    demographicsExample.innerHTML = 'Example: "Age 30-55, 5-15 years experience, work at firms with 50-500 employees"';
+                    
+                    contextHelp.textContent = 'Their professional role and work context';
+                    contextExample.innerHTML = 'Example: "Managing financial advisory practices with client relationships and compliance requirements"';
+                    
+                    marketExample.innerHTML = 'Example: "Financial advisors at regional firms (50-500 employees) who are stuck at income plateau"';
+                }
+            }
+
+            document.getElementById('icpForm').onsubmit = async function(e) {
                 e.preventDefault();
                 
                 const button = document.querySelector('button');
                 const results = document.getElementById('results');
                 
-                button.textContent = '🧠 Reasoning Agent Processing...';
+                button.textContent = '🧠 Starting Research Process...';
                 button.disabled = true;
                 
                 results.style.display = 'block';
-                results.innerHTML = '<div class="loading">🧠 Reasoning Agent Working...<br><br>⚡ Multiple evaluation cycles in progress<br>📊 Iteratively improving research quality<br>🎯 Ensuring professional consulting standards</div>';
+                results.innerHTML = '<div class="loading">🔄 Processing Business Context...<br><br>📊 Step 1: Research Agent discovering insights<br>🎭 Step 2: Interview Agent validating through simulation<br>🎯 Step 3: Generating marketing intelligence</div>';
                 
+                // Collect all form data
+                const formData = new FormData(this);
                 const data = {
-                    comprehensive_context: document.getElementById('business_context').value
+                    business_context: Object.fromEntries(formData)
                 };
                 
                 try {
-                    const response = await fetch('/research/context-analysis', {
+                    const response = await fetch('/research/complete-intelligence-pipeline', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
                     
                     const result = await response.json();
-                    results.innerHTML = '<h3>🎉 Reasoning Agent Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    results.innerHTML = '<h3>🎉 Complete Intelligence Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
                 } catch (error) {
                     results.innerHTML = '<h3>❌ Error:</h3><p>' + error.message + '</p>';
                 }
                 
-                button.textContent = '🧠 Start Reasoning Agent Research';
+                button.textContent = '🧠 Start Research → Interview Intelligence';
                 button.disabled = false;
             };
+
+            // Set default business type
+            document.getElementById('b2b').checked = true;
+            updateFormForBusinessType('B2B');
         </script>
     </body>
     </html>
     """
     return HTMLResponse(content=html_content)
-
-@app.post("/research/context-analysis")
-async def context_analysis_research(context: SimpleBusinessContext):
-    """
-    Process comprehensive business context using reasoning agent
-    """
-    
-    # Generate session ID
-    session_id = f"context_research_{len(research_sessions) + 1}"
-    
-    # Store initial context
-    research_sessions[session_id] = {
-        "status": "processing",
-        "business_context": {"comprehensive_context": context.comprehensive_context},
-        "agent_results": {},
-        "created_at": "2025-06-14"
-    }
-    
-    try:
-        if not AGENTS_AVAILABLE:
-            return {
-                "session_id": session_id,
-                "status": "error",
-                "message": "Agent system not available. Check deployment logs for import errors."
-            }
-        
-        print(f"🧠 Starting reasoning agent with comprehensive context...")
-        
-        # Try different input formats based on what your agent expects
-        try:
-            # First try: dictionary format (most common)
-            enhanced_context = {
-                "company_name": "Comprehensive Analysis",
-                "industry": "Various",
-                "target_market": "To be determined from context",
-                "current_challenges": "To be analyzed from context",
-                "product_service": "Comprehensive context provided",
-                "assumptions": context.comprehensive_context
-            }
-            reasoning_results = agent_function(enhanced_context)
-            
-        except Exception as e1:
-            try:
-                # Second try: string format with prompt
-                prompt = f"""
-                Analyze this comprehensive business context and provide detailed ICP research:
-                
-                {context.comprehensive_context}
-                
-                Provide insights on:
-                - Target customer psychology and motivations
-                - Specific pain points and frustrations
-                - Desires and aspirations
-                - Voice of customer language
-                - Marketing recommendations
-                - Positioning strategies
-                """
-                reasoning_results = agent_function(prompt)
-                
-            except Exception as e2:
-                # Third try: just the raw context
-                reasoning_results = agent_function(context.comprehensive_context)
-        
-        # Store results
-        research_sessions[session_id]["agent_results"]["reasoning_research"] = reasoning_results
-        research_sessions[session_id]["status"] = "completed"
-        
-        return {
-            "session_id": session_id,
-            "status": "completed",
-            "message": "Comprehensive context analysis completed",
-            "agents_available": AGENTS_AVAILABLE,
-            "context_length": len(context.comprehensive_context),
-            "results_preview": str(reasoning_results)[:500] + "..." if len(str(reasoning_results)) > 500 else str(reasoning_results),
-            "full_results": reasoning_results,
-            "full_results_url": f"/research/{session_id}/results"
-        }
-        
-    except Exception as e:
-        research_sessions[session_id]["status"] = "error"
-        research_sessions[session_id]["error"] = str(e)
-        
-        return {
-            "session_id": session_id,
-            "status": "error",
-            "message": f"Error processing context analysis: {str(e)}",
-            "agents_available": AGENTS_AVAILABLE,
-            "troubleshooting": "Check deployment logs for agent import status"
-        }
 
 @app.post("/research/icp-analysis")
 async def start_icp_research(context: BusinessContext):

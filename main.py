@@ -501,6 +501,13 @@ async def start_icp_research(context: BusinessContext):
             "message": f"Error processing research: {str(e)}"
         }
 
+@app.post("/research/complete-intelligence-pipeline")
+async def complete_intelligence_pipeline(context: dict):
+    """
+    Execute complete pipeline: Business Context → Research → Interviews → Marketing Intelligence
+    """
+    # ... (complete function code from above)
+
 @app.get("/research/{session_id}/results")
 async def get_research_results(session_id: str):
     """

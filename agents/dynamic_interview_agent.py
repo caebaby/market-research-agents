@@ -1,5 +1,5 @@
 from crewai import Agent, Task, Crew
-from crewai_tools import WebsiteSearchTool, SerperDevTool
+# from crewai_tools import WebsiteSearchTool, SerperDevTool  # Not needed for interviews
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 import json

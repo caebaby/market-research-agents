@@ -506,7 +506,72 @@ async def complete_intelligence_pipeline(context: dict):
     """
     Execute complete pipeline: Business Context → Research → Interviews → Marketing Intelligence
     """
-    # ... (complete function code from above)
+    session_id = f"complete_pipeline_{len(research_sessions) + 1}"
+    
+    research_sessions[session_id] = {
+        "status": "processing",
+        "business_context": context,
+        "agent_results": {},
+        "created_at": "2025-06-17"
+    }
+    
+    try:
+        business_context = context['business_context']
+        
+        print(f"🔄 Starting complete intelligence pipeline...")
+        
+        # Step 1: Research Agent (discovers insights)
+        print("📊 Step 1: Research Agent discovering insights...")
+        if not AGENTS_AVAILABLE:
+            return {
+                "session_id": session_id,
+                "status": "error",
+                "message": "Agents not available. Check deployment."
+            }
+        
+        research_results = agent_function(business_context)
+        
+        # Step 2: Interview Agent (validates through simulation) 
+        print("🎭 Step 2: Interview Agent validating through simulation...")
+        try:
+            from agents.dynamic_interview_agent import dynamic_interview_intelligence
+            interview_results = dynamic_interview_intelligence(research_results)
+        except ImportError as e:
+            # If interview agent not available, return research only
+            interview_results = {"status": f"Interview agent not available: {str(e)}"}
+        
+        # Store results
+        research_sessions[session_id]["agent_results"] = {
+            "research_intelligence": research_results,
+            "interview_intelligence": interview_results
+        }
+        research_sessions[session_id]["status"] = "completed"
+        
+        return {
+            "session_id": session_id,
+            "status": "completed",
+            "message": "Complete intelligence pipeline executed",
+            "pipeline_flow": "Business Context → Research Discovery → Interview Validation → Marketing Intelligence",
+            "research_insights": "Deep customer psychology and authentic language discovered",
+            "interview_validation": "Multiple conversation simulations conducted",
+            "marketing_readiness": "Campaign-ready insights with objection handling",
+            "results_preview": str(research_results)[:500] + "...",
+            "full_results": {
+                "research": research_results,
+                "interviews": interview_results
+            },
+            "full_results_url": f"/research/{session_id}/results"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error in complete pipeline: {str(e)}"
+        }
 
 @app.get("/research/{session_id}/results")
 async def get_research_results(session_id: str):

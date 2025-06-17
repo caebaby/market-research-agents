@@ -26,9 +26,7 @@ class DynamicInterviewAgent:
                 temperature=0.4
             )
         
-        # Tools (if needed)
-        self.web_search = SerperDevTool()
-        self.website_tool = WebsiteSearchTool()
+      # No tools needed for persona conversations
         
         # Base template questions
         self.base_questions = {

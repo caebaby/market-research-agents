@@ -203,7 +203,7 @@ You make interviews feel like conversations with real people, revealing authenti
         """Create task for persona generation"""
         return Task(
             description=f"""
-            CREATE 6-8 REALISTIC {context['target_customer']} PERSONAS for interview simulation
+            CREATE 4 REALISTIC {context['target_customer']} PERSONAS for interview simulation
             
             CONTEXT:
             • Target Customer: {context['target_customer']}
@@ -217,10 +217,7 @@ You make interviews feel like conversations with real people, revealing authenti
             2. **Ambitious {context['target_customer']}** (Growth-focused, impatient for results)
             3. **Experienced {context['target_customer']}** (Veteran, skeptical of new solutions)
             4. **Overwhelmed {context['target_customer']}** (Stressed, needs simplification)
-            5. **Successful but Plateaued {context['target_customer']}** (Doing well but stuck)
-            6. **Cautious {context['target_customer']}** (Risk-averse, needs proof)
-            7. **Tech-Savvy {context['target_customer']}** (Embraces new solutions)
-            8. **Traditional {context['target_customer']}** (Prefers established approaches)
+        
             
             FOR EACH PERSONA:
             • Detailed demographics and background

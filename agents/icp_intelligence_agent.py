@@ -8,12 +8,12 @@ class HighQualityReasoningAgent:
     def __init__(self):
         # CRITICAL: Use proper models for reasoning tasks
         self.reasoning_llm = ChatOpenAI(
-            model="gpt-4",  # Changed from gpt-4o-mini
+            model="gpt-4o-mini",  # Back to gpt-4o-mini for token limits
             temperature=0.2  # Lower for more focused reasoning
         )
         
         self.validation_llm = ChatOpenAI(
-            model="gpt-4", 
+            model="gpt-4o-mini",  # Match the reasoning model, 
             temperature=0.1
         )
         

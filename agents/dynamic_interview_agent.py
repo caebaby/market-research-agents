@@ -1,30 +1,24 @@
 from crewai import Agent, Task, Crew
-# from crewai_tools import WebsiteSearchTool, SerperDevTool  # Not needed for interviews
 from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
+# Remove: from langchain_anthropic import ChatAnthropic
 import json
 import os
 
 class DynamicInterviewAgent:
     def __init__(self):
-        # GPT-4 for structured interviews
+        # GPT-4o-mini for everything
         self.interview_llm = ChatOpenAI(
-            model="gpt-4",
+            model="gpt-4o-mini",
             temperature=0.3
         )
         
-        # Claude for persona creation (better at character development)
-        try:
-            self.persona_llm = ChatAnthropic(
-                model="claude-3-5-sonnet-20241022",
-                temperature=0.4
-            )
-        except:
-            # Fallback to GPT-4 if Claude not available
-            self.persona_llm = ChatOpenAI(
-                model="gpt-4",
-                temperature=0.4
-            )
+        # Persona creation with same model
+        self.persona_llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0.4
+        )
+        
+        # Remove the try/except Claude block
         
       # No tools needed for persona conversations
         

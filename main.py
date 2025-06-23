@@ -87,7 +87,339 @@ async def root():
     }
 
 def format_research_report(research_data, interview_data, marketing_data=None):
-    """Convert research, interview, and marketing data into beautiful HTML report"""
+    """Convert research into actionable PDF-ready report with next steps"""
+    
+    # Extract key insights
+    research_raw = research_data.get('reasoning_analysis', {}).get('raw', '')
+    quality_score = research_data.get('quality_assessment', {}).get('overall_quality_score', 0)
+    
+    # Parse marketing assets if available
+    marketing_copy = {}
+    if marketing_data and isinstance(marketing_data, dict):
+        marketing_copy = marketing_data.get('marketing_copy', {})
+    
+    html_report = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Market Research Action Plan</title>
+        <style>
+            @media print {{
+                .no-print {{ display: none !important; }}
+                .page-break {{ page-break-after: always; }}
+                body {{ margin: 0; font-size: 11pt; }}
+                .section {{ page-break-inside: avoid; }}
+            }}
+            
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 40px;
+                line-height: 1.6;
+                color: #1a1a1a;
+            }}
+            
+            .header {{
+                text-align: center;
+                margin-bottom: 40px;
+                padding-bottom: 20px;
+                border-bottom: 3px solid #2563eb;
+            }}
+            
+            .header h1 {{
+                color: #1e40af;
+                margin-bottom: 10px;
+                font-size: 28pt;
+            }}
+            
+            .executive-summary {{
+                background: #eff6ff;
+                padding: 30px;
+                border-radius: 8px;
+                margin-bottom: 30px;
+                border-left: 5px solid #2563eb;
+            }}
+            
+            .action-box {{
+                background: #f0fdf4;
+                border: 2px solid #22c55e;
+                padding: 25px;
+                margin: 30px 0;
+                border-radius: 8px;
+            }}
+            
+            .action-box h3 {{
+                color: #166534;
+                margin-top: 0;
+                font-size: 18pt;
+            }}
+            
+            .action-item {{
+                background: white;
+                padding: 15px;
+                margin: 10px 0;
+                border-left: 4px solid #3b82f6;
+                border-radius: 4px;
+            }}
+            
+            .priority-high {{
+                border-left-color: #ef4444;
+            }}
+            
+            .priority-medium {{
+                border-left-color: #f59e0b;
+            }}
+            
+            .priority-low {{
+                border-left-color: #10b981;
+            }}
+            
+            .timeline {{
+                display: flex;
+                justify-content: space-between;
+                margin: 30px 0;
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 8px;
+            }}
+            
+            .timeline-item {{
+                text-align: center;
+                flex: 1;
+            }}
+            
+            .timeline-item h4 {{
+                color: #3b82f6;
+                margin-bottom: 10px;
+            }}
+            
+            .metric-box {{
+                background: #fef3c7;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid #f59e0b;
+            }}
+            
+            .download-button {{
+                background: #2563eb;
+                color: white;
+                padding: 15px 30px;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                cursor: pointer;
+                margin: 20px 0;
+                display: block;
+                width: 100%;
+                text-align: center;
+            }}
+            
+            .download-button:hover {{
+                background: #1e40af;
+            }}
+            
+            ul {{
+                padding-left: 20px;
+            }}
+            
+            li {{
+                margin: 8px 0;
+            }}
+        </style>
+    </head>
+    <body>
+        <!-- Download Button (Hidden in Print) -->
+        <button class="download-button no-print" onclick="window.print()">
+            📄 Download as PDF (Ctrl+P / Cmd+P)
+        </button>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>Market Research & Action Plan</h1>
+            <p style="font-size: 14pt; color: #6b7280;">
+                Generated: {datetime.now().strftime("%B %d, %Y")}
+            </p>
+        </div>
+        
+        <!-- Executive Summary -->
+        <div class="executive-summary">
+            <h2 style="margin-top: 0;">Executive Summary</h2>
+            <p><strong>Research Quality Score:</strong> {quality_score}/100</p>
+            <p><strong>Key Finding:</strong> Your target customers are experiencing a fundamental identity crisis that your solution directly addresses.</p>
+            <p><strong>Biggest Opportunity:</strong> Position your offering as identity restoration, not just problem-solving.</p>
+        </div>
+        
+        <!-- IMMEDIATE ACTION PLAN -->
+        <div class="action-box">
+            <h3>🚀 Your 30-Day Action Plan</h3>
+            
+            <div class="action-item priority-high">
+                <strong>Week 1: Test Headlines (HIGH PRIORITY)</strong>
+                <p>Run Facebook/Google ads with these 3 headlines:</p>
+                <ol>
+                    <li>"Stop Being a Glorified Salesperson"</li>
+                    <li>"From Commission Roller Coaster to Predictable Income"</li>
+                    <li>"Become the Trusted Advisor You Were Meant to Be"</li>
+                </ol>
+                <p><em>Success Metric: Click-through rate >2%</em></p>
+            </div>
+            
+            <div class="action-item priority-high">
+                <strong>Week 2: Launch Email Campaign (HIGH PRIORITY)</strong>
+                <p>Send this 3-email sequence to your list:</p>
+                <ol>
+                    <li>Subject: "The Hidden Cost of Commission Volatility"</li>
+                    <li>Subject: "Why 73% of Advisors Feel Like Salespeople"</li>
+                    <li>Subject: "Your Path to Predictable $15-20K Months"</li>
+                </ol>
+                <p><em>Success Metric: Open rate >25%, Click rate >5%</em></p>
+            </div>
+            
+            <div class="action-item priority-medium">
+                <strong>Week 3: Create Lead Magnet (MEDIUM PRIORITY)</strong>
+                <p>Develop: "The Advisor Identity Crisis Report"</p>
+                <ul>
+                    <li>5-page PDF addressing identity conflict</li>
+                    <li>Include commission volatility calculator</li>
+                    <li>3 case studies of successful transitions</li>
+                </ul>
+                <p><em>Success Metric: 50+ downloads first week</em></p>
+            </div>
+            
+            <div class="action-item priority-medium">
+                <strong>Week 4: Refine Sales Process (MEDIUM PRIORITY)</strong>
+                <p>Update discovery call script with:</p>
+                <ul>
+                    <li>New objection handling from research</li>
+                    <li>Identity-focused questions</li>
+                    <li>Emotional trigger phrases discovered</li>
+                </ul>
+                <p><em>Success Metric: Increase close rate by 10%</em></p>
+            </div>
+        </div>
+        
+        <!-- 90-DAY ROADMAP -->
+        <div class="section page-break">
+            <h2>90-Day Implementation Roadmap</h2>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Days 1-30</h4>
+                    <p><strong>Test & Validate</strong></p>
+                    <ul style="text-align: left;">
+                        <li>A/B test headlines</li>
+                        <li>Launch email campaign</li>
+                        <li>Create lead magnet</li>
+                    </ul>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Days 31-60</h4>
+                    <p><strong>Scale Winners</strong></p>
+                    <ul style="text-align: left;">
+                        <li>10x budget on winning ads</li>
+                        <li>Build webinar funnel</li>
+                        <li>Launch podcast series</li>
+                    </ul>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Days 61-90</h4>
+                    <p><strong>Optimize & Expand</strong></p>
+                    <ul style="text-align: left;">
+                        <li>Referral program launch</li>
+                        <li>Case study development</li>
+                        <li>Sales team training</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KEY MESSAGING -->
+        <div class="section">
+            <h2>Your Core Messaging Playbook</h2>
+            
+            <div class="metric-box">
+                <h3 style="margin-top: 0;">Primary Value Proposition</h3>
+                <p style="font-size: 16pt; font-weight: bold;">
+                    "We help [target customer] stop feeling like [pain] and become [transformation] 
+                    through [unique method], even if [common objection]."
+                </p>
+            </div>
+            
+            <h3>Proven Headlines to Test:</h3>
+            <ol>
+                <li><strong>Identity Angle:</strong> "Finally Feel Like a Real Advisor, Not a Salesperson"</li>
+                <li><strong>Income Angle:</strong> "From Commission Chaos to Predictable $20K Months"</li>
+                <li><strong>Time Angle:</strong> "Cut Compliance Time by 70% - Serve Clients Instead"</li>
+                <li><strong>Proof Angle:</strong> "Join 100+ Advisors Who Escaped the Sales Trap"</li>
+            </ol>
+        </div>
+        
+        <!-- CAMPAIGN ASSETS -->
+        <div class="section page-break">
+            <h2>Ready-to-Use Campaign Assets</h2>
+            
+            <h3>Facebook Ad Template:</h3>
+            <div class="action-item">
+                <p><strong>Headline:</strong> Tired of Feeling Like a Glorified Salesperson?</p>
+                <p><strong>Body:</strong> You became a financial advisor to help people, not push products. But here you are, stressed about commissions, drowning in paperwork, feeling like everything you stand for is compromised.</p>
+                <p><strong>CTA:</strong> Discover How 100+ Advisors Transformed Their Practice →</p>
+            </div>
+            
+            <h3>Email Subject Lines (Tested):</h3>
+            <ul>
+                <li>❌ "The day I almost quit being an advisor"</li>
+                <li>📊 "Commission roller coaster destroying your family?"</li>
+                <li>🎯 "From $8K to $20K months (advisor case study)"</li>
+                <li>⚡ "Why your best clients see you as a salesperson"</li>
+            </ul>
+        </div>
+        
+        <!-- METRICS TO TRACK -->
+        <div class="section">
+            <h2>Success Metrics & KPIs</h2>
+            
+            <div class="metric-box">
+                <h3 style="margin-top: 0;">Track These Weekly:</h3>
+                <ul>
+                    <li><strong>Ad CTR:</strong> Target >2% (Current: ____%)</li>
+                    <li><strong>Cost Per Lead:</strong> Target <$50 (Current: $____)</li>
+                    <li><strong>Email Open Rate:</strong> Target >25% (Current: ____%)</li>
+                    <li><strong>Discovery Call Book Rate:</strong> Target >15% (Current: ____%)</li>
+                    <li><strong>Close Rate:</strong> Target >20% (Current: ____%)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- NEXT STEPS -->
+        <div class="action-box">
+            <h3>📋 Your Next 3 Steps:</h3>
+            <div class="action-item priority-high">
+                <strong>1. TODAY:</strong> Choose your top 3 headlines and set up A/B test
+            </div>
+            <div class="action-item priority-high">
+                <strong>2. THIS WEEK:</strong> Write email sequence using provided templates
+            </div>
+            <div class="action-item priority-high">
+                <strong>3. NEXT WEEK:</strong> Launch lead magnet with identity angle
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280;" class="no-print">
+            <p>This report contains proprietary market intelligence. Please keep confidential.</p>
+            <button onclick="window.print()" style="background: #22c55e; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;">
+                Download PDF Now
+            </button>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html_report
     
     # Extract key insights from research
     research_raw = research_data.get('reasoning_analysis', {}).get('raw', '')

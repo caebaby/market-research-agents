@@ -752,29 +752,29 @@ async def complete_intelligence_pipeline(context: dict):
             "status": "completed",
             "message": "Complete intelligence pipeline executed",
             "pipeline_flow": "Business Context → Research Discovery → Interview Validation → Marketing Intelligence → Campaign Assets",
-          "research_insights": "Deep customer psychology and authentic language discovered",
-           "interview_validation": "Multiple conversation simulations conducted",
-           "marketing_synthesis": "High-converting campaign assets created",
-           "marketing_readiness": "Campaign-ready insights with complete marketing assets",
-           "results_preview": str(research_results)[:500] + "...",
-           "full_results": {
-               "research": research_results,
-               "interviews": interview_results,
-               "marketing": marketing_synthesis
-           },
-           "full_results_url": f"/research/{session_id}/results",
-           "formatted_report_url": f"/research/{session_id}/report"
-       }
-       
-            except Exception as e:
-                research_sessions[session_id]["status"] = "error"
-                research_sessions[session_id]["error"] = str(e)
-       
-       return {
-           "session_id": session_id,
-           "status": "error",
-           "message": f"Error in complete pipeline: {str(e)}"
-       }
+            "research_insights": "Deep customer psychology and authentic language discovered",
+            "interview_validation": "Multiple conversation simulations conducted",
+            "marketing_synthesis": "High-converting campaign assets created",
+            "marketing_readiness": "Campaign-ready insights with complete marketing assets",
+            "results_preview": str(research_results)[:500] + "...",
+            "full_results": {
+                "research": research_results,
+                "interviews": interview_results,
+                "marketing": marketing_synthesis
+            },
+            "full_results_url": f"/research/{session_id}/results",
+            "formatted_report_url": f"/research/{session_id}/report"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error in complete pipeline: {str(e)}"
+        }
 
 @app.get("/research/{session_id}/results")
 async def get_research_results(session_id: str):

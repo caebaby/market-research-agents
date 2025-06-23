@@ -766,9 +766,9 @@ async def complete_intelligence_pipeline(context: dict):
            "formatted_report_url": f"/research/{session_id}/report"
        }
        
-   except Exception as e:
-       research_sessions[session_id]["status"] = "error"
-       research_sessions[session_id]["error"] = str(e)
+            except Exception as e:
+                research_sessions[session_id]["status"] = "error"
+                research_sessions[session_id]["error"] = str(e)
        
        return {
            "session_id": session_id,

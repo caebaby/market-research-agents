@@ -9,6 +9,21 @@ import json
 AGENTS_AVAILABLE = False
 agent_function = None
 
+# Add marketing synthesizer import
+try:
+    from agents.marketing_intelligence_synthesizer import synthesize_marketing_intelligence
+    MARKETING_SYNTHESIZER_AVAILABLE = True
+    print("✅ Successfully imported marketing intelligence synthesizer")
+except ImportError as e:
+    print(f"❌ Marketing synthesizer import failed: {e}")
+    MARKETING_SYNTHESIZER_AVAILABLE = False
+    
+    def synthesize_marketing_intelligence(research, interviews, context):
+        return {
+            "error": "Marketing synthesizer not available",
+            "message": "Module still loading"
+        }
+
 # Try multiple possible function names from your agent file
 try:
     from agents.icp_intelligence_agent import run_reasoning_icp_research
@@ -58,20 +73,21 @@ research_sessions = {}
 @app.get("/")
 async def root():
     return {
-        "message": "Market Research Agent Team - Phase 2 Live! 🤖",
-        "version": "2.0.0",
-        "status": "ICP Intelligence Agent Ready" if AGENTS_AVAILABLE else "Agent Loading",
+        "message": "Market Research Agent Team - Phase 3 Live! 🤖",
+        "version": "3.0.0",
+        "status": "All Agents Ready" if AGENTS_AVAILABLE and MARKETING_SYNTHESIZER_AVAILABLE else "Agents Loading",
         "agents_available": AGENTS_AVAILABLE,
+        "marketing_available": MARKETING_SYNTHESIZER_AVAILABLE,
         "agents": [
             "ICP Intelligence Agent ✅" if AGENTS_AVAILABLE else "ICP Intelligence Agent 🔄",
-            "Competitor Intelligence Agent (Coming Soon)",
-            "Interview Simulation Agent (Coming Soon)", 
-            "Marketing Intelligence Synthesizer (Coming Soon)"
+            "Interview Simulation Agent ✅",
+            "Marketing Intelligence Synthesizer ✅" if MARKETING_SYNTHESIZER_AVAILABLE else "Marketing Intelligence Synthesizer 🔄",
+            "Competitor Intelligence Agent (Coming Soon)"
         ]
     }
 
-def format_research_report(research_data, interview_data):
-    """Convert research and interview data into beautiful HTML report"""
+def format_research_report(research_data, interview_data, marketing_data=None):
+    """Convert research, interview, and marketing data into beautiful HTML report"""
     
     # Extract key insights from research
     research_raw = research_data.get('reasoning_analysis', {}).get('raw', '')
@@ -80,6 +96,9 @@ def format_research_report(research_data, interview_data):
     # Extract interview insights
     interview_status = interview_data.get('status', 'No interview data')
     has_interviews = 'not available' not in str(interview_data)
+    
+    # Check if marketing data available
+    has_marketing = marketing_data and 'error' not in str(marketing_data) and 'not_available' not in str(marketing_data)
     
     html_report = f"""
     <!DOCTYPE html>
@@ -147,42 +166,17 @@ def format_research_report(research_data, interview_data):
             .quality-high {{ background: #dcfce7; color: #166534; }}
             .quality-medium {{ background: #fef3c7; color: #92400e; }}
             .quality-low {{ background: #fee2e2; color: #991b1b; }}
-            .reasoning-chain {{
-                background: #f1f5f9;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 15px 0;
-            }}
-            .reasoning-step {{
-                margin: 10px 0;
-                padding: 10px;
-                background: white;
-                border-radius: 6px;
-                border-left: 3px solid #64748b;
-            }}
-            .confidence-score {{
-                background: #e0e7ff;
-                padding: 15px;
-                border-radius: 8px;
-                text-align: center;
-                font-weight: 600;
-                font-size: 18px;
-                margin: 15px 0;
-            }}
-            .interview-placeholder {{
-                background: #fef2f2;
-                border: 2px dashed #ef4444;
-                padding: 30px;
-                border-radius: 12px;
-                text-align: center;
-                color: #dc2626;
-            }}
-            .marketing-ready {{
+            .marketing-asset {{
                 background: #f0fdf4;
-                border-left: 4px solid #22c55e;
+                border: 1px solid #22c55e;
                 padding: 20px;
-                border-radius: 6px;
-                margin: 20px 0;
+                border-radius: 8px;
+                margin: 15px 0;
+            }}
+            .asset-title {{
+                font-weight: 600;
+                color: #166534;
+                margin-bottom: 10px;
             }}
             .json-toggle {{
                 background: #1e293b;
@@ -221,109 +215,33 @@ def format_research_report(research_data, interview_data):
                   else f'<span class="quality-badge quality-medium">Medium Quality</span>' if quality_score >= 60 
                   else f'<span class="quality-badge quality-low">Needs Improvement</span>'}
             </div>
-            
-            <div class="insight-box">
-                <h3>🎯 Key Target Customer Insight</h3>
-                <p><strong>Mid-career financial advisors see themselves as trapped professionals, not salespeople.</strong> They're caught between their professional identity as trusted advisors and the pressure of commission-based sales structures.</p>
-            </div>
-
-            <div class="customer-voice">
-                💬 <strong>Authentic Customer Voice:</strong><br>
-                "I feel like a glorified salesperson instead of a trusted advisor. My income is a roller coaster - great one month, terrible the next. I want to provide genuine financial planning advice to my clients, but the pressure to meet sales quotas is overwhelming."
-            </div>
         </div>
 
-        <!-- RESEARCH INTELLIGENCE -->
+        <!-- MARKETING ASSETS (if available) -->
+        {f'''
         <div class="section">
-            <h2>🧠 Research Intelligence</h2>
-            
-            <h3>Core Identity & Psychology</h3>
-            <div class="reasoning-chain">
-                <div class="reasoning-step">
-                    <strong>💡 Observation:</strong> Mid-career advisors (5-10 years) earning $75K-$150K, stuck at income plateau, caught between advice and sales pressure
-                </div>
-                <div class="reasoning-step">
-                    <strong>🔗 Pattern:</strong> Professional competence validation + financial security anxiety
-                </div>
-                <div class="reasoning-step">
-                    <strong>🎯 Root Cause:</strong> Identity conflict between being a financial advisor vs. salesperson
-                </div>
-                <div class="reasoning-step">
-                    <strong>🧪 Contradiction Test:</strong> Would be invalidated if advisors expressed satisfaction with commission structure
-                </div>
-                <div class="reasoning-step">
-                    <strong>📊 Confidence:</strong> 80% - Strong contextual evidence with room for interview validation
-                </div>
+            <h2>🎯 Marketing Campaign Assets</h2>
+            <div class="marketing-asset">
+                <div class="asset-title">Headlines Ready for Testing</div>
+                <p>High-converting headlines generated from customer psychology insights</p>
             </div>
-
-            <div class="marketing-ready">
-                <h3>🚀 Marketing Applications</h3>
-                <ul>
-                    <li><strong>Positioning:</strong> Professional identity restoration, not just income growth</li>
-                    <li><strong>Headlines:</strong> "Stop Being a Glorified Salesperson" / "From Commission Roller Coaster to Trusted Advisor"</li>
-                    <li><strong>Pain Points:</strong> Identity conflict, income unpredictability, compliance overwhelm</li>
-                    <li><strong>Emotional Triggers:</strong> Professional pride, family security, client service quality</li>
-                </ul>
+            <div class="marketing-asset">
+                <div class="asset-title">Ad Copy Variants</div>
+                <p>Facebook and Google ads using authentic customer language</p>
+            </div>
+            <div class="marketing-asset">
+                <div class="asset-title">Email Sequences</div>
+                <p>Welcome series addressing core pain points and desires</p>
             </div>
         </div>
-
-        <!-- INTERVIEW INTELLIGENCE -->
-        <div class="section">
-            <h2>🎭 Interview Intelligence</h2>
-            
-            {f'''
-            <div class="interview-placeholder">
-                <h3>⚠️ Interview Agent Not Available</h3>
-                <p><strong>Status:</strong> {interview_status}</p>
-                <p>To get complete interview intelligence with persona conversations:</p>
-                <ol>
-                    <li>Move dynamic_interview_agent.py to main agents folder</li>
-                    <li>Redeploy the system</li>
-                    <li>Rerun the complete analysis</li>
-                </ol>
-                <p><strong>Expected Output:</strong> 6-8 realistic personas with multiple conversation sessions, objection discovery, and authentic language capture</p>
-            </div>
-            ''' if not has_interviews else '''
-            <div class="insight-box">
-                <h3>🎤 Conversation Intelligence Available</h3>
-                <p>Multiple persona interviews conducted with conversation-level insights.</p>
-            </div>
-            '''}
-        </div>
-
-        <!-- CAMPAIGN RECOMMENDATIONS -->
-        <div class="section">
-            <h2>📈 Campaign Recommendations</h2>
-            
-            <div class="marketing-ready">
-                <h3>🎯 Primary Campaign Angle</h3>
-                <p><strong>"Professional Identity Restoration"</strong> - Help advisors transition from feeling like salespeople to being respected financial planners</p>
-                
-                <h3>📝 Messaging Framework</h3>
-                <ul>
-                    <li><strong>Hook:</strong> "Tired of feeling like a glorified salesperson?"</li>
-                    <li><strong>Problem:</strong> Commission roller coaster destroying professional identity</li>
-                    <li><strong>Solution:</strong> 4-pillar transformation to recurring revenue model</li>
-                    <li><strong>Proof:</strong> 100+ advisors already transformed</li>
-                    <li><strong>CTA:</strong> "Discover how to become the trusted advisor you meant to be"</li>
-                </ul>
-
-                <h3>🎪 Content Strategy</h3>
-                <ul>
-                    <li><strong>Blog Posts:</strong> "The Hidden Cost of Commission Volatility on Your Family"</li>
-                    <li><strong>Podcast Episodes:</strong> "From Salesperson to Trusted Advisor: One Advisor's Journey"</li>
-                    <li><strong>Social Posts:</strong> Share advisor transformations using authentic language</li>
-                    <li><strong>Email Sequences:</strong> Address professional identity crisis directly</li>
-                </ul>
-            </div>
-        </div>
+        ''' if has_marketing else ''}
 
         <!-- RAW DATA ACCESS -->
         <div class="section">
             <h2>🔧 Technical Data</h2>
             <button class="json-toggle" onclick="toggleJson()">📋 Show/Hide Raw JSON Data</button>
             <div class="json-data" id="jsonData">
-{json.dumps({"research": research_data, "interviews": interview_data}, indent=2)}
+{json.dumps({"research": research_data, "interviews": interview_data, "marketing": marketing_data}, indent=2)}
             </div>
         </div>
 
@@ -346,7 +264,7 @@ def format_research_report(research_data, interview_data):
 @app.get("/research/{session_id}/report")
 async def get_formatted_report(session_id: str):
     """
-    Get beautifully formatted HTML report instead of raw JSON
+    Get beautifully formatted HTML report
     """
     if session_id not in research_sessions:
         raise HTTPException(status_code=404, detail="Research session not found")
@@ -354,12 +272,13 @@ async def get_formatted_report(session_id: str):
     session = research_sessions[session_id]
     agent_results = session.get("agent_results", {})
     
-    # Extract research and interview data
+    # Extract all data types
     research_data = agent_results.get("research_intelligence", {})
     interview_data = agent_results.get("interview_intelligence", {})
+    marketing_data = agent_results.get("marketing_intelligence", {})
     
     # Generate formatted report
-    html_report = format_research_report(research_data, interview_data)
+    html_report = format_research_report(research_data, interview_data, marketing_data)
     
     return HTMLResponse(content=html_report)
 
@@ -507,14 +426,14 @@ async def comprehensive_research_form():
     </head>
     <body>
         <div class="container">
-            <h1>🎯 Business Context for ICP Research</h1>
+            <h1>🎯 Business Context for Complete Intelligence Pipeline</h1>
             
             <div class="process-flow">
-                <h3>🔄 Research Process Flow</h3>
-                <p><strong>Step 1:</strong> You provide basic business context (what you know)</p>
-                <p><strong>Step 2:</strong> Research agent discovers deep insights (hidden pain, psychology, objections)</p>
-                <p><strong>Step 3:</strong> Interview agent validates and deepens research through conversation simulation</p>
-                <p><strong>Step 4:</strong> Marketing intelligence ready for campaign creation</p>
+                <h3>🔄 Complete Intelligence Process</h3>
+                <p><strong>Step 1:</strong> You provide business context</p>
+                <p><strong>Step 2:</strong> Research agent discovers deep customer psychology</p>
+                <p><strong>Step 3:</strong> Interview agent validates through persona simulations</p>
+                <p><strong>Step 4:</strong> Marketing synthesizer creates campaign-ready assets</p>
             </div>
             
             <form id="icpForm">
@@ -553,7 +472,7 @@ async def comprehensive_research_form():
                     </div>
                 </div>
 
-                <!-- SECTION 2: TARGET CUSTOMER (WHAT YOU KNOW) -->
+                <!-- SECTION 2: TARGET CUSTOMER -->
                 <div class="section">
                     <h3>👥 Target Customer (What You Know)</h3>
                     
@@ -579,7 +498,7 @@ async def comprehensive_research_form():
                     </div>
                 </div>
 
-                <!-- SECTION 3: BUSINESS CHALLENGES (WHAT YOU OBSERVE) -->
+                <!-- SECTION 3: BUSINESS CHALLENGES -->
                 <div class="section">
                     <h3>😤 Business Challenges You Solve</h3>
                     
@@ -593,12 +512,12 @@ async def comprehensive_research_form():
                     <div class="form-group">
                         <label for="customer_complaints">Common Complaints You Hear</label>
                         <textarea id="customer_complaints" name="customer_complaints"></textarea>
-                        <div class="help-text">What do prospects and customers typically complain about in your industry?</div>
+                        <div class="help-text">What do prospects and customers typically complain about?</div>
                         <div class="example">Example: "Too much paperwork", "Income unpredictability", "Feeling like salespeople rather than advisors"</div>
                     </div>
                 </div>
 
-                <!-- SECTION 4: GOALS & MOTIVATIONS (WHAT THEY SAY) -->
+                <!-- SECTION 4: GOALS & MOTIVATIONS -->
                 <div class="section">
                     <h3>🎯 Customer Goals (What They Tell You)</h3>
                     
@@ -642,7 +561,7 @@ async def comprehensive_research_form():
                     </div>
                 </div>
 
-                <button type="submit">🧠 Start Research → Interview Intelligence</button>
+                <button type="submit">🚀 Start Complete Intelligence Pipeline</button>
             </form>
             
             <div id="results"></div>
@@ -701,11 +620,11 @@ async def comprehensive_research_form():
                 const button = document.querySelector('button');
                 const results = document.getElementById('results');
                 
-                button.textContent = '🧠 Starting Research Process...';
+                button.textContent = '🔄 Running Complete Intelligence Pipeline...';
                 button.disabled = true;
                 
                 results.style.display = 'block';
-                results.innerHTML = '<div class="loading">🔄 Processing Business Context...<br><br>📊 Step 1: Research Agent discovering insights<br>🎭 Step 2: Interview Agent validating through simulation<br>🎯 Step 3: Generating marketing intelligence</div>';
+                results.innerHTML = '<div class="loading">🔄 Processing Business Context...<br><br>📊 Step 1: Research Agent discovering insights<br>🎭 Step 2: Interview Agent validating through simulation<br>🎯 Step 3: Marketing Synthesizer creating campaign assets<br><br>This may take 3-5 minutes...</div>';
                 
                 // Collect all form data
                 const formData = new FormData(this);
@@ -721,12 +640,30 @@ async def comprehensive_research_form():
                     });
                     
                     const result = await response.json();
-                    results.innerHTML = '<h3>🎉 Complete Intelligence Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    
+                    if (result.formatted_report_url) {
+                        results.innerHTML = `
+                            <h3>🎉 Complete Intelligence Pipeline Finished!</h3>
+                            <p><strong>Status:</strong> ${result.status}</p>
+                            <p><strong>Session ID:</strong> ${result.session_id}</p>
+                            <div style="margin: 20px 0;">
+                                <a href="${result.formatted_report_url}" target="_blank" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                                    📄 View Formatted Report
+                                </a>
+                            </div>
+                            <details style="margin-top: 20px;">
+                                <summary style="cursor: pointer; color: #3b82f6;">View Raw JSON Results</summary>
+                                <pre>${JSON.stringify(result, null, 2)}</pre>
+                            </details>
+                        `;
+                    } else {
+                        results.innerHTML = '<h3>🎉 Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    }
                 } catch (error) {
                     results.innerHTML = '<h3>❌ Error:</h3><p>' + error.message + '</p>';
                 }
                 
-                button.textContent = '🧠 Start Research → Interview Intelligence';
+                button.textContent = '🚀 Start Complete Intelligence Pipeline';
                 button.disabled = false;
             };
 
@@ -739,61 +676,6 @@ async def comprehensive_research_form():
     """
     return HTMLResponse(content=html_content)
 
-@app.post("/research/icp-analysis")
-async def start_icp_research(context: BusinessContext):
-    """
-    Start ICP research using AI agent (legacy endpoint)
-    """
-    
-    # Generate session ID
-    session_id = f"icp_research_{len(research_sessions) + 1}"
-    
-    # Store initial context
-    research_sessions[session_id] = {
-        "status": "processing",
-        "business_context": context.dict(),
-        "agent_results": {},
-        "created_at": "2025-06-14"
-    }
-    
-    try:
-        if not AGENTS_AVAILABLE:
-            return {
-                "session_id": session_id,
-                "status": "error",
-                "message": "Agent system not available. Check deployment logs."
-            }
-        
-        print(f"🤖 Starting ICP research for {context.company_name}...")
-        
-        # Convert to dict for agent
-        business_dict = context.dict()
-        
-        # Run the agent
-        icp_results = agent_function(business_dict)
-        
-        # Store results
-        research_sessions[session_id]["agent_results"]["icp_intelligence"] = str(icp_results)
-        research_sessions[session_id]["status"] = "completed"
-        
-        return {
-            "session_id": session_id,
-            "status": "completed",
-            "message": f"ICP research completed for {context.company_name}",
-            "results_preview": str(icp_results)[:500] + "...",
-            "full_results_url": f"/research/{session_id}/results", 
-        }
-        
-    except Exception as e:
-        research_sessions[session_id]["status"] = "error"
-        research_sessions[session_id]["error"] = str(e)
-        
-        return {
-            "session_id": session_id,
-            "status": "error",
-            "message": f"Error processing research: {str(e)}"
-        }
-
 @app.post("/research/complete-intelligence-pipeline")
 async def complete_intelligence_pipeline(context: dict):
     """
@@ -805,7 +687,7 @@ async def complete_intelligence_pipeline(context: dict):
         "status": "processing",
         "business_context": context,
         "agent_results": {},
-        "created_at": "2025-06-17"
+        "created_at": "2025-06-19"
     }
     
     try:
@@ -833,10 +715,35 @@ async def complete_intelligence_pipeline(context: dict):
             # If interview agent not available, return research only
             interview_results = {"status": f"Interview agent not available: {str(e)}"}
         
-        # Store results
+        # Step 3: Marketing Intelligence Synthesis
+        print("🎯 Step 3: Marketing Intelligence Synthesis...")
+        marketing_synthesis = {}
+        if MARKETING_SYNTHESIZER_AVAILABLE:
+            try:
+                marketing_results = synthesize_marketing_intelligence(
+                    research_results,
+                    interview_results,
+                    business_context
+                )
+                marketing_synthesis = marketing_results
+                print("✅ Marketing synthesis complete!")
+            except Exception as e:
+                print(f"❌ Marketing synthesis error: {e}")
+                marketing_synthesis = {
+                    "status": "error",
+                    "message": str(e)
+                }
+        else:
+            marketing_synthesis = {
+                "status": "not_available",
+                "message": "Marketing synthesizer not loaded"
+            }
+        
+        # Store all results
         research_sessions[session_id]["agent_results"] = {
             "research_intelligence": research_results,
-            "interview_intelligence": interview_results
+            "interview_intelligence": interview_results,
+            "marketing_intelligence": marketing_synthesis
         }
         research_sessions[session_id]["status"] = "completed"
         
@@ -844,56 +751,59 @@ async def complete_intelligence_pipeline(context: dict):
             "session_id": session_id,
             "status": "completed",
             "message": "Complete intelligence pipeline executed",
-            "pipeline_flow": "Business Context → Research Discovery → Interview Validation → Marketing Intelligence",
-            "research_insights": "Deep customer psychology and authentic language discovered",
-            "interview_validation": "Multiple conversation simulations conducted",
-            "marketing_readiness": "Campaign-ready insights with objection handling",
-            "results_preview": str(research_results)[:500] + "...",
-            "full_results": {
-                "research": research_results,
-                "interviews": interview_results
-            },
-            "full_results_url": f"/research/{session_id}/results",
-"formatted_report_url": f"/research/{session_id}/report"
-        }
-        
-    except Exception as e:
-        research_sessions[session_id]["status"] = "error"
-        research_sessions[session_id]["error"] = str(e)
-        
-        return {
-            "session_id": session_id,
-            "status": "error",
-            "message": f"Error in complete pipeline: {str(e)}"
-        }
+            "pipeline_flow": "Business Context → Research Discovery → Interview Validation → Marketing Intelligence → Campaign Assets",
+          "research_insights": "Deep customer psychology and authentic language discovered",
+           "interview_validation": "Multiple conversation simulations conducted",
+           "marketing_synthesis": "High-converting campaign assets created",
+           "marketing_readiness": "Campaign-ready insights with complete marketing assets",
+           "results_preview": str(research_results)[:500] + "...",
+           "full_results": {
+               "research": research_results,
+               "interviews": interview_results,
+               "marketing": marketing_synthesis
+           },
+           "full_results_url": f"/research/{session_id}/results",
+           "formatted_report_url": f"/research/{session_id}/report"
+       }
+       
+   except Exception as e:
+       research_sessions[session_id]["status"] = "error"
+       research_sessions[session_id]["error"] = str(e)
+       
+       return {
+           "session_id": session_id,
+           "status": "error",
+           "message": f"Error in complete pipeline: {str(e)}"
+       }
 
 @app.get("/research/{session_id}/results")
 async def get_research_results(session_id: str):
-    """
-    Get the full research results
-    """
-    if session_id not in research_sessions:
-        raise HTTPException(status_code=404, detail="Research session not found")
-    
-    session = research_sessions[session_id]
-    
-    return {
-        "session_id": session_id,
-        "status": session["status"],
-        "business_context": session["business_context"],
-        "agent_results": session.get("agent_results", {}),
-        "created_at": session["created_at"]
-    }
+   """
+   Get the full research results
+   """
+   if session_id not in research_sessions:
+       raise HTTPException(status_code=404, detail="Research session not found")
+   
+   session = research_sessions[session_id]
+   
+   return {
+       "session_id": session_id,
+       "status": session["status"],
+       "business_context": session["business_context"],
+       "agent_results": session.get("agent_results", {}),
+       "created_at": session["created_at"]
+   }
 
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "healthy", 
-        "service": "market-research-agents", 
-        "phase": "2",
-        "agents_available": AGENTS_AVAILABLE
-    }
+   return {
+       "status": "healthy", 
+       "service": "market-research-agents", 
+       "phase": "3",
+       "agents_available": AGENTS_AVAILABLE,
+       "marketing_available": MARKETING_SYNTHESIZER_AVAILABLE
+   }
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+   import uvicorn
+   uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))

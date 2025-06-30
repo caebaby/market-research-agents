@@ -312,149 +312,53 @@ Specific Questions: [Any particular insights you're looking for]
 @app.post("/research/hybrid-analysis")
 async def hybrid_analysis_research(context: SimpleBusinessContext):
     """
-    HYBRID POWER: Gemini's coordination + Claude's depth + Your production system
+    CONTEXT-DRIVEN AI RESEARCH: Smart agents that adapt to any business context
     """
     
     # Generate session ID
-    session_id = f"hybrid_research_{len(research_sessions) + 1}"
+    session_id = f"context_driven_{len(research_sessions) + 1}"
     
     # Store initial context
     research_sessions[session_id] = {
         "status": "processing",
         "business_context": {"comprehensive_context": context.comprehensive_context},
         "agent_results": {},
-        "approach": "hybrid_gemini_coordination",
+        "approach": "context_driven_smart_agents",
         "created_at": "2025-06-28"
     }
     
-    if not AGENTS_AVAILABLE:
-        return {
-            "session_id": session_id,
-            "status": "error",
-            "message": "Agents not available. Check import errors.",
-            "troubleshooting": "Verify agent files exist and have correct structure"
-        }
-    
     try:
-        print(f"🚀 Starting HYBRID analysis with Gemini coordination...")
+        print(f"🧠 Starting Context-Driven Research with Smart Agent Coordination...")
         
-        # Extract company name from context for Gemini's approach
-        company_context = context.comprehensive_context
-        company_name = "Target Company"  # Default, could be smarter
-        
-        # Task 1: ICP Research (using your comprehensive approach)
-        research_task = Task(
-            description=f"""
-            Perform comprehensive ICP analysis for this business context:
-            
-            {company_context}
-            
-            Apply the full 11-step methodology including:
-            - Deep customer psychology analysis
-            - Pain points and frustrations
-            - Desires and aspirations  
-            - Voice of customer language capture
-            - Psychological frameworks (Jungian, LAB Profile, JTBD)
-            - Professional consulting quality validation
-            
-            Provide specific, actionable insights that go beyond surface demographics.
-            """,
-            expected_output="""
-            Comprehensive ICP analysis including:
-            1. Detailed customer psychology profile
-            2. Specific pain points with authentic language
-            3. Core desires and motivations
-            4. Voice of customer phrases and terminology
-            5. Psychological archetype analysis
-            6. Decision-making patterns and biases
-            7. Professional-grade insights ready for marketing use
-            """,
-            agent=icp_agent
-        )
-        
-        # Task 2: Interview Simulation (if interview agent available)
-        interview_task = None
-        if interview_agent:
-            interview_task = Task(
-                description="""
-                Based on the ICP research, simulate realistic customer interviews.
-                Create authentic dialogue and responses that validate the research insights.
-                Generate persona-based scenarios that reveal emotional motivations.
-                Capture the authentic voice and concerns of the target customers.
-                """,
-                expected_output="""
-                Simulated interview responses including:
-                1. Realistic customer quotes and dialogue
-                2. Persona-based scenarios 
-                3. Emotional motivations and concerns
-                4. Validation of research insights
-                5. Additional customer language patterns
-                """,
-                agent=interview_agent,
-                context=[research_task]
-            )
-        
-        # Task 3: Marketing Synthesis (if marketing agent available)
-        marketing_task = None
-        if marketing_agent:
-            marketing_task = Task(
-                description="""
-                Synthesize all insights into actionable marketing strategy.
-                Create messaging frameworks, channel recommendations, and campaign concepts.
-                Provide implementation roadmap and specific tactics.
-                Ensure recommendations are immediately actionable.
-                """,
-                expected_output="""
-                Complete marketing strategy including:
-                1. Messaging framework with specific language
-                2. Channel recommendations with rationale
-                3. Campaign concepts and tactics
-                4. Implementation roadmap
-                5. Success metrics and KPIs
-                """,
-                agent=marketing_agent,
-                context=[research_task] + ([interview_task] if interview_task else [])
-            )
-        
-        # Build task list based on available agents
-        tasks = [research_task]
-        agents_used = [icp_agent]
-        
-        if interview_task and interview_agent:
-            tasks.append(interview_task)
-            agents_used.append(interview_agent)
-            
-        if marketing_task and marketing_agent:
-            tasks.append(marketing_task)
-            agents_used.append(marketing_agent)
-        
-        # Create and run the crew (Gemini's approach)
-        hybrid_crew = Crew(
-            agents=agents_used,
-            tasks=tasks,
-            process=Process.sequential,
-            verbose=2
-        )
-        
-        print(f"🔥 Running {len(tasks)} agents in sequence...")
-        
-        # Execute the crew (THE MAGIC MOMENT)
-        result = hybrid_crew.kickoff(inputs={'company_name': company_name})
+        # Run the context-driven coordinator
+        research_results = run_avatar_agnostic_research(context.comprehensive_context)
         
         # Store results
-        research_sessions[session_id]["agent_results"]["hybrid_result"] = str(result)
-        research_sessions[session_id]["status"] = "completed"
+        research_sessions[session_id]["agent_results"]["context_driven_research"] = research_results
         
-        return {
-            "session_id": session_id,
-            "status": "completed",
-            "message": f"HYBRID analysis completed using {len(tasks)} agents",
-            "agents_used": len(agents_used),
-            "approach": "gemini_coordination",
-            "results_preview": str(result)[:500] + "..." if len(str(result)) > 500 else str(result),
-            "full_results": str(result),
-            "full_results_url": f"/research/{session_id}/results"
-        }
+        if research_results["success"]:
+            research_sessions[session_id]["status"] = "completed"
+            
+            return {
+                "session_id": session_id,
+                "status": "completed",
+                "message": "Context-driven research completed - agents adapted to business context",
+                "approach": "smart_agents_pure_context",
+                "crew_execution": research_results["crew_execution"],
+                "tasks_completed": research_results["processing_summary"]["tasks_completed"],
+                "results_preview": research_results["results"][:500] + "..." if len(research_results["results"]) > 500 else research_results["results"],
+                "full_results": research_results,
+                "full_results_url": f"/research/{session_id}/results"
+            }
+        else:
+            research_sessions[session_id]["status"] = "error"
+            return {
+                "session_id": session_id,
+                "status": "error", 
+                "message": "Smart agent coordination encountered errors",
+                "error_details": research_results.get("error", "Unknown error"),
+                "troubleshooting": "Check CrewAI setup and agent configurations"
+            }
         
     except Exception as e:
         research_sessions[session_id]["status"] = "error"
@@ -463,10 +367,10 @@ async def hybrid_analysis_research(context: SimpleBusinessContext):
         return {
             "session_id": session_id,
             "status": "error",
-            "message": f"Error in HYBRID analysis: {str(e)}",
-            "troubleshooting": "Check agent compatibility and CrewAI setup"
+            "message": f"Error in context-driven research: {str(e)}",
+            "troubleshooting": "Check import paths and CrewAI dependencies"
         }
-
+        
 @app.get("/research/{session_id}/results")
 async def get_research_results(session_id: str):
     """

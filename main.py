@@ -5,73 +5,38 @@ import os
 from typing import Dict, Any
 import json
 from dotenv import load_dotenv
-# from agents.avatar_agnostic_coordinator import run_avatar_agnostic_research
 
 # Load environment variables
 load_dotenv()
 
-# CrewAI imports (Gemini's approach)
-from crewai import Crew, Process, Task
-from crewai_tools import SerperDevTool
-
-# Agent imports - we'll handle different structures
+# Agent imports - simplified approach
 AGENTS_AVAILABLE = False
-icp_agent = None
-interview_agent = None 
-marketing_agent = None
+agent_function = None
 
-# Try to import agents with multiple fallback approaches
+# Try to import the working function from your ICP agent
 try:
-    # Try Gemini's expected structure first
-    from agents.icp_intelligence_agent import ICPIntelligenceAgent
-    from agents.dynamic_interview_agent import DynamicInterviewAgent  
-    from agents.marketing_intelligence_synthesizer import MarketingIntelligenceSynthesizer
-    
-    # Initialize search tool
-    search_tool = SerperDevTool()
-    
-    # Create agent instances (Gemini style)
-    icp_agent = ICPIntelligenceAgent().agent()
-    interview_agent = DynamicInterviewAgent().agent()
-    marketing_agent = MarketingIntelligenceSynthesizer().agent()
-    
+    from agents.icp_intelligence_agent import run_reasoning_icp_research
+    agent_function = run_reasoning_icp_research
     AGENTS_AVAILABLE = True
-    print("✅ Successfully imported Gemini-style agents")
-    
-except ImportError as e1:
+    print("✅ Successfully imported run_reasoning_icp_research")
+except ImportError:
     try:
-        # Try your original structure
-        from agents.icp_intelligence_agent import ReasoningICPAgent
-        from agents.interview_agent import InterviewAgent  # Guess at name
-        from agents.marketing_synthesis_agent import MarketingAgent  # Guess at name
-        
-        search_tool = SerperDevTool()
-        
-        # Create agent instances (your style)
-        icp_instance = ReasoningICPAgent()
-        icp_agent = icp_instance.create_research_agent()
-        
-        # We'll handle these if they exist
-        try:
-            interview_instance = InterviewAgent()
-            interview_agent = interview_instance.create_interview_agent()
-        except:
-            interview_agent = None
-            
-        try:
-            marketing_instance = MarketingAgent()
-            marketing_agent = marketing_instance.create_marketing_agent()
-        except:
-            marketing_agent = None
-            
+        from agents.icp_intelligence_agent import reasoning_agent_call
+        agent_function = reasoning_agent_call
         AGENTS_AVAILABLE = True
-        print("✅ Successfully imported your original-style agents")
-        
-    except ImportError as e2:
-        print(f"❌ Agent import failed: {e1}, {e2}")
+        print("✅ Successfully imported reasoning_agent_call")
+    except ImportError as e:
+        print(f"❌ Agent import failed: {e}")
         AGENTS_AVAILABLE = False
+        
+        def agent_function(context):
+            return {
+                "error": "Agent system not available",
+                "message": "Please check agent imports",
+                "context_received": True
+            }
 
-app = FastAPI(title="Market Research Agent Team - HYBRID POWER", version="3.0.0")
+app = FastAPI(title="Market Research Agent Team", version="3.0.0")
 
 # Data Models
 class SimpleBusinessContext(BaseModel):
@@ -83,16 +48,11 @@ research_sessions = {}
 @app.get("/")
 async def root():
     return {
-        "message": "Market Research Agent Team - HYBRID POWER! 🚀",
+        "message": "Market Research Agent Team - Live! 🚀",
         "version": "3.0.0",
-        "status": "Gemini Coordination + FastAPI Power",
-        "agents_available": AGENTS_AVAILABLE,
-        "coordination": "CrewAI Sequential Processing",
-        "agents": [
-            "ICP Intelligence Agent ✅" if icp_agent else "ICP Intelligence Agent ❌",
-            "Interview Agent ✅" if interview_agent else "Interview Agent ❌", 
-            "Marketing Synthesis Agent ✅" if marketing_agent else "Marketing Synthesis Agent ❌"
-        ]
+        "research_form": "/research",
+        "status": "Multi-Agent System Ready" if AGENTS_AVAILABLE else "Agent System Loading",
+        "agents_available": AGENTS_AVAILABLE
     }
 
 @app.get("/research")
@@ -516,6 +476,63 @@ These should sound like real people talking, not marketing speak'></textarea>
     """
     return HTMLResponse(content=html_content)
 
+@app.post("/research/context-analysis")
+async def context_analysis_research(context: SimpleBusinessContext):
+    """
+    Process comprehensive business context using reasoning agent
+    """
+    
+    # Generate session ID
+    session_id = f"context_research_{len(research_sessions) + 1}"
+    
+    # Store initial context
+    research_sessions[session_id] = {
+        "status": "processing",
+        "business_context": {"comprehensive_context": context.comprehensive_context},
+        "agent_results": {},
+        "created_at": "2025-06-30"
+    }
+    
+    try:
+        if not AGENTS_AVAILABLE:
+            return {
+                "session_id": session_id,
+                "status": "error",
+                "message": "Agent system not available. Check deployment logs for import errors."
+            }
+        
+        print(f"🧠 Starting reasoning agent with comprehensive context...")
+        
+        # Call the agent function
+        agent_results = agent_function(context.comprehensive_context)
+        
+        # Store results
+        research_sessions[session_id]["agent_results"]["reasoning_research"] = agent_results
+        research_sessions[session_id]["status"] = "completed"
+        
+        return {
+            "session_id": session_id,
+            "status": "completed",
+            "message": "Comprehensive context analysis completed",
+            "agents_available": AGENTS_AVAILABLE,
+            "context_length": len(context.comprehensive_context),
+            "results_preview": str(agent_results)[:500] + "..." if len(str(agent_results)) > 500 else str(agent_results),
+            "full_results": agent_results,
+            "full_results_url": f"/research/{session_id}/results"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error processing context analysis: {str(e)}",
+            "agents_available": AGENTS_AVAILABLE,
+            "troubleshooting": "Check deployment logs for agent import status"
+        }
+
 @app.post("/research/hybrid-analysis")
 async def hybrid_analysis_research(context: SimpleBusinessContext):
     """
@@ -531,31 +548,29 @@ async def hybrid_analysis_research(context: SimpleBusinessContext):
         "business_context": {"comprehensive_context": context.comprehensive_context},
         "agent_results": {},
         "approach": "context_driven_smart_agents",
-        "created_at": "2025-06-28"
+        "created_at": "2025-06-30"
     }
     
     try:
         print(f"🧠 Starting Context-Driven Research with Smart Agent Coordination...")
         
-        # Run the context-driven coordinator
-        # research_results = run_avatar_agnostic_research(context.comprehensive_context)
-        research_results = {"success": False, "error": "Coordinator temporarily disabled for testing"}
+        # For now, use the same agent function until coordinator is fixed
+        research_results = agent_function(context.comprehensive_context) if AGENTS_AVAILABLE else {
+            "success": False, 
+            "error": "Coordinator temporarily disabled for testing"
+        }
         
         # Store results
         research_sessions[session_id]["agent_results"]["context_driven_research"] = research_results
         
-        if research_results["success"]:
+        if research_results.get("success", True) and "error" not in research_results:
             research_sessions[session_id]["status"] = "completed"
             
             return {
                 "session_id": session_id,
                 "status": "completed",
-                "message": "Context-driven research completed - agents adapted to business context",
-                "approach": "smart_agents_pure_context",
-                "crew_execution": research_results["crew_execution"],
-                "tasks_completed": research_results["processing_summary"]["tasks_completed"],
-                "results_preview": research_results["results"][:500] + "..." if len(research_results["results"]) > 500 else research_results["results"],
-                "full_results": research_results,
+                "message": "Context-driven research completed",
+                "results": research_results,
                 "full_results_url": f"/research/{session_id}/results"
             }
         else:
@@ -563,9 +578,8 @@ async def hybrid_analysis_research(context: SimpleBusinessContext):
             return {
                 "session_id": session_id,
                 "status": "error", 
-                "message": "Smart agent coordination encountered errors",
-                "error_details": research_results.get("error", "Unknown error"),
-                "troubleshooting": "Check CrewAI setup and agent configurations"
+                "message": "Research encountered errors",
+                "error_details": research_results.get("error", "Unknown error")
             }
         
     except Exception as e:
@@ -575,8 +589,7 @@ async def hybrid_analysis_research(context: SimpleBusinessContext):
         return {
             "session_id": session_id,
             "status": "error",
-            "message": f"Error in context-driven research: {str(e)}",
-            "troubleshooting": "Check import paths and CrewAI dependencies"
+            "message": f"Error in context-driven research: {str(e)}"
         }
         
 @app.get("/research/{session_id}/results")
@@ -602,9 +615,8 @@ async def get_research_results(session_id: str):
 async def health_check():
     return {
         "status": "healthy", 
-        "service": "hybrid-market-research-agents", 
+        "service": "market-research-agents", 
         "version": "3.0.0",
-        "coordination": "gemini_crewai",
         "agents_available": AGENTS_AVAILABLE
     }
 

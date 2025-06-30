@@ -1,0 +1,84 @@
+ICP RESEARCH INPUT TEMPLATE - STRUCTURED DATA COLLECTION
+PURPOSE:
+This template ensures you provide comprehensive business context to generate professional-grade market research insights like the Axiom results (100/100 quality score).
+
+📋 REQUIRED FIELDS FOR HIGH-QUALITY ANALYSIS
+1. BUSINESS TYPE
+
+ B2B
+ B2C
+ B2B2C
+
+2. COMPANY NAME
+[Your company name]
+3. INDUSTRY
+[Specific industry/niche - be detailed]
+Example: "Financial Services - Independent Financial Advisors"
+4. PRODUCT/SERVICE DESCRIPTION
+[Detailed description of what you offer and HOW it works. Include your unique methodology if applicable]
+
+Structure like Axiom's 4-pillar example:
+- PILLAR 1: [Component name] - [What it does and why it matters]
+- PILLAR 2: [Component name] - [What it does and why it matters]
+- etc.
+5. TARGET CUSTOMER DESCRIPTION
+[One sentence describing your ideal customer]
+Example: "Mid-career financial advisors with 5-10 years experience who are stuck and frustrated with current practice growth"
+6. DEMOGRAPHICS & CHARACTERISTICS
+- Age: [Range]
+- Gender: [If relevant]
+- Education: [Level]
+- Income: [Current range]
+- Company size: [For B2B]
+- Location: [Geographic focus]
+- Career stage: [Experience level]
+- Other relevant traits: [Industry-specific characteristics]
+7. CUSTOMER CONTEXT/SITUATION
+[Describe their day-to-day reality, responsibilities, and pressures]
+Example: "Managing financial advisory practices with client relationship responsibilities, compliance requirements, and commission-based income structures..."
+8. PROBLEMS YOUR OFFERING SOLVES
+[List 5-7 specific problems, starting with most painful]
+1. [Most urgent/painful problem]
+2. [Second most painful]
+3. [Third problem]
+etc.
+
+Be specific - not "lack of growth" but "commission income volatility creating financial stress"
+9. CUSTOMER COMPLAINTS (EXACT QUOTES)
+[7-10 actual quotes or paraphrases of what customers say]
+- "Quote 1 expressing frustration"
+- "Quote 2 about their pain"
+- "Quote 3 showing emotion"
+etc.
+
+These should sound like real people talking, not marketing speak
+10. CUSTOMER'S STATED GOALS
+[What they SAY they want to achieve - 5-6 goals]
+- Goal 1 (in their words)
+- Goal 2
+- Goal 3
+etc.
+11. WHAT SUCCESS LOOKS LIKE (IN THEIR WORDS)
+[5-6 quotes describing their vision of success]
+- "Success quote 1"
+- "Success quote 2"
+- "Success quote 3"
+etc.
+12. TARGET MARKET DETAILS
+[Expand on demographics with market segmentation details]
+- Primary segment: [Description]
+- Company characteristics: [For B2B]
+- Current situation: [What stage/state they're in]
+- Aspirational direction: [Where they want to go]
+13. MARKETING GOAL
+[What specific action do you want them to take?]
+Example: "Generate qualified leads for discovery calls with [target customer] who are frustrated with [main pain] and want [primary desire]"
+14. ADDITIONAL CONTEXT
+[Important details about your company, founders, culture, differentiators]
+Include:
+- Founder story/credibility
+- Company values/culture
+- Main differentiators
+- Social proof (current customers, results)
+- Unique positioning
+- Content/marketing assets you already have

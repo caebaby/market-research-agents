@@ -8,3 +8,4 @@ requests
 beautifulsoup4
 langchain-openai
 structlog
+anthropic==0.25.0

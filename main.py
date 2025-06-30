@@ -5,6 +5,7 @@ import os
 from typing import Dict, Any
 import json
 from dotenv import load_dotenv
+from agents.avatar_agnostic_coordinator import run_avatar_agnostic_research
 
 # Load environment variables
 load_dotenv()

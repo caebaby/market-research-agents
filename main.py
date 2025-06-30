@@ -283,7 +283,7 @@ Specific Questions: [Any particular insights you're looking for]
                 };
                 
                 try {
-                    const response = await fetch('/research/hybrid-analysis', {
+                    const response = await fetch('/research/context-analysis', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)

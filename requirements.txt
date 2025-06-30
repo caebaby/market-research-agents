@@ -6,3 +6,5 @@ python-dotenv
 pydantic
 requests
 beautifulsoup4
+langchain-openai
+structlog

@@ -331,8 +331,8 @@ async def hybrid_analysis_research(context: SimpleBusinessContext):
         print(f"🧠 Starting Context-Driven Research with Smart Agent Coordination...")
         
         # Run the context-driven coordinator
-       # research_results = run_avatar_agnostic_research(context.comprehensive_context)
-research_results = {"success": False, "error": "Coordinator temporarily disabled for testing"}
+        # research_results = run_avatar_agnostic_research(context.comprehensive_context)
+        research_results = {"success": False, "error": "Coordinator temporarily disabled for testing"}
         
         # Store results
         research_sessions[session_id]["agent_results"]["context_driven_research"] = research_results

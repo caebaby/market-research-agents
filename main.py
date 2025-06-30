@@ -16,7 +16,7 @@ USE_CLAUDE = bool(ANTHROPIC_API_KEY)
 if USE_CLAUDE:
     try:
         import anthropic
-        claude_client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
+        claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)  # Changed Client to Anthropic
         print("✅ Claude API initialized for premium research quality")
     except ImportError:
         print("⚠️ Anthropic package not installed. Run: pip install anthropic")

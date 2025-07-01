@@ -1357,46 +1357,241 @@ async def get_deep_psychology_report(session_id: str, format: str = "html"):
         "created_at": session["created_at"]
     }
     
-    # For now, return a placeholder until we create the formatter file
-    html_content = f"""
+    # Generate deep intelligence markdown
+    try:
+        markdown_content = format_deep_intelligence_report(session_data)
+        
+        if format == "markdown":
+            return HTMLResponse(
+                content=f"<pre style='white-space: pre-wrap; font-family: monospace; padding: 20px; background: #f5f5f5; border-radius: 8px;'>{markdown_content}</pre>",
+                headers={"Content-Type": "text/html"}
+            )
+        
+        # Convert to HTML
+        html_content = deep_psychology_to_html(markdown_content, session_id)
+        
+    except Exception as e:
+        # Fallback if formatter has issues
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Deep Psychology Report - Session {session_id}</title>
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    max-width: 900px;
+                    margin: 40px auto;
+                    padding: 40px;
+                    background: #f8fafc;
+                }}
+                .container {{
+                    background: white;
+                    padding: 60px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                }}
+                h1 {{
+                    color: #2d3748;
+                    border-bottom: 3px solid #9f7aea;
+                    padding-bottom: 20px;
+                }}
+                .error {{
+                    background: #fed7d7;
+                    border: 1px solid #fc8181;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🧠 Deep Psychology Report</h1>
+                <p><strong>Session:</strong> {session_id}</p>
+                <div class="error">
+                    <p><strong>Processing Error:</strong> {str(e)}</p>
+                    <p>The deep intelligence formatter encountered an issue. This usually means the research data format needs adjustment.</p>
+                </div>
+                <p><strong>Available Options:</strong></p>
+                <ul>
+                    <li><a href="/research/{session_id}/results">View Raw Research Data</a></li>
+                    <li><a href="/research/{session_id}/report">Standard Report</a></li>
+                </ul>
+                <a href="/research/{session_id}/report">← Back to Standard Report</a>
+            </div>
+        </body>
+        </html>
+        """
+    
+    return HTMLResponse(content=html_content)
+
+def deep_psychology_to_html(markdown_content: str, session_id: str) -> str:
+    """
+    Convert deep psychology markdown to HTML with specialized styling
+    """
+    
+    # Convert markdown to HTML
+    html_content = markdown_content
+    
+    # Convert headers
+    html_content = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html_content, flags=re.MULTILINE)
+    html_content = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html_content, flags=re.MULTILINE)
+    html_content = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html_content, flags=re.MULTILINE)
+    
+    # Convert bold text
+    html_content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html_content)
+    
+    # Convert italic text  
+    html_content = re.sub(r'\*(.+?)\*', r'<em>\1</em>', html_content)
+    
+    # Convert bullet points
+    html_content = re.sub(r'^- (.+)$', r'<li>\1</li>', html_content, flags=re.MULTILINE)
+    
+    # Convert blockquotes (customer thoughts)
+    html_content = re.sub(r'^> (.+)$', r'<blockquote class="customer-voice">\1</blockquote>', html_content, flags=re.MULTILINE)
+    
+    # Convert line breaks
+    html_content = html_content.replace('\n\n', '</p><p>')
+    html_content = html_content.replace('\n', '<br>')
+    
+    # Wrap in paragraphs
+    html_content = f'<p>{html_content}</p>'
+    
+    # Create full HTML document with psychology-focused styling
+    full_html = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Deep Psychology Report - Session {session_id}</title>
+        <title>Deep Customer Psychology Intelligence - Session {session_id}</title>
         <style>
             body {{
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                max-width: 900px;
-                margin: 40px auto;
-                padding: 40px;
-                background: #f8fafc;
+                line-height: 1.7;
+                color: #1a202c;
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 40px 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
             }}
-            .container {{
+            .report-container {{
                 background: white;
                 padding: 60px;
-                border-radius: 12px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                border-radius: 16px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             }}
             h1 {{
                 color: #2d3748;
-                border-bottom: 3px solid #9f7aea;
+                font-size: 2.8em;
+                margin-bottom: 30px;
+                border-bottom: 4px solid #9f7aea;
                 padding-bottom: 20px;
+                text-align: center;
+            }}
+            h2 {{
+                color: #4a5568;
+                font-size: 1.9em;
+                margin-top: 50px;
+                margin-bottom: 25px;
+                border-left: 6px solid #9f7aea;
+                padding-left: 20px;
+                background: linear-gradient(90deg, rgba(159, 122, 234, 0.1), transparent);
+                padding: 15px 20px;
+                border-radius: 0 8px 8px 0;
+            }}
+            h3 {{
+                color: #2d3748;
+                font-size: 1.4em;
+                margin-top: 35px;
+                margin-bottom: 18px;
+                border-bottom: 2px solid #e2e8f0;
+                padding-bottom: 8px;
+            }}
+            .customer-voice {{
+                background: linear-gradient(90deg, #fef5e7, #fed7aa);
+                border-left: 5px solid #f59e0b;
+                margin: 25px 0;
+                padding: 20px 25px;
+                font-style: italic;
+                font-size: 1.1em;
+                border-radius: 0 8px 8px 0;
+                position: relative;
+            }}
+            .customer-voice::before {{
+                content: '"';
+                font-size: 3em;
+                color: #f59e0b;
+                position: absolute;
+                left: 8px;
+                top: -5px;
+                opacity: 0.3;
+            }}
+            li {{
+                margin: 12px 0;
+                padding-left: 15px;
+                position: relative;
+            }}
+            li::before {{
+                content: '🧠';
+                position: absolute;
+                left: -5px;
+            }}
+            strong {{
+                color: #2d3748;
+                font-weight: 700;
+                background: rgba(159, 122, 234, 0.1);
+                padding: 2px 6px;
+                border-radius: 4px;
+            }}
+            .action-buttons {{
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                padding: 25px;
+                border-radius: 12px;
+                margin-bottom: 40px;
+                text-align: center;
+            }}
+            .btn {{
+                display: inline-block;
+                background: white;
+                color: #4c51bf;
+                padding: 14px 28px;
+                text-decoration: none;
+                border-radius: 8px;
+                margin: 0 15px;
+                font-weight: 600;
+                transition: all 0.3s;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }}
+            .btn:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
             }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <h1>🧠 Deep Psychology Report</h1>
-            <p><strong>Session:</strong> {session_id}</p>
-            <p><strong>Status:</strong> Deep intelligence formatter will be added next</p>
-            <p>This will show deep psychological insights about your customers' unconscious motivations, fears, and decision patterns.</p>
-            <a href="/research/{session_id}/report">← Back to Standard Report</a>
+        <div class="report-container">
+            <div class="action-buttons">
+                <a href="/research/{session_id}/psychology?format=markdown" class="btn">📋 Copy Markdown</a>
+                <a href="/research/{session_id}/report" class="btn">📊 Standard Report</a>
+                <a href="/research/{session_id}/results" class="btn">🔍 Raw Data</a>
+            </div>
+            
+            {html_content}
+            
+            <hr style="margin: 50px 0; border: none; border-top: 2px solid #e2e8f0;">
+            <div style="text-align: center; color: #718096; font-size: 0.95em; background: #f7fafc; padding: 20px; border-radius: 8px;">
+                <strong>🧠 Deep Intelligence Session {session_id}</strong><br>
+                <a href="/research/{session_id}/psychology?format=markdown">Raw Markdown</a> • 
+                <a href="/research/{session_id}/report">Standard Report</a> • 
+                <a href="/research/{session_id}/results">Raw Data</a>
+            </div>
         </div>
     </body>
     </html>
     """
     
-    return HTMLResponse(content=html_content)
+    return full_html
 
 @app.get("/health")
 async def health_check():

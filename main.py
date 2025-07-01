@@ -1595,9 +1595,6 @@ def deep_psychology_to_html(markdown_content: str, session_id: str) -> str:
 
 @app.get("/health")
 async def health_check():
-
-@app.get("/health")
-async def health_check():
     return {
         "status": "healthy", 
         "service": "market-research-agents", 

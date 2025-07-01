@@ -17,7 +17,7 @@ USE_CLAUDE = bool(ANTHROPIC_API_KEY)
 if USE_CLAUDE:
     try:
         import anthropic
-        claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)  # Changed Client to Anthropic
+        claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         print("✅ Claude API initialized for premium research quality")
     except ImportError:
         print("⚠️ Anthropic package not installed. Run: pip install anthropic")
@@ -167,10 +167,10 @@ except ImportError:
                 "context_received": True
             }
 
-# Try to import interview agent - FIXED VERSION
+# Try to import interview agent
 try:
     from agents.dynamic_interview_agent import dynamic_interview_intelligence
-    interview_agent = dynamic_interview_intelligence  # This is the function at the bottom of your file
+    interview_agent = dynamic_interview_intelligence
     INTERVIEW_AGENT_AVAILABLE = True
     print("✅ Successfully imported dynamic_interview_intelligence")
 except ImportError:
@@ -647,7 +647,7 @@ async def enhanced_agent_call(prompt: str, use_claude: bool = USE_CLAUDE) -> Any
     if use_claude and USE_CLAUDE:
         try:
             response = claude_client.messages.create(
-                model="claude-3-5-sonnet-20241022",  # Best value for quality/cost
+                model="claude-3-5-sonnet-20241022",
                 max_tokens=8000,
                 temperature=0.5,
                 system="You are an elite market researcher with deep psychological training. Your insights are so accurate that clients feel like you've read their private journals. You uncover hidden beliefs, unspoken fears, and secret desires that even customers don't consciously recognize.",
@@ -676,7 +676,7 @@ async def context_analysis_research(context: SimpleBusinessContext):
         "status": "processing",
         "business_context": {"comprehensive_context": context.comprehensive_context},
         "agent_results": {},
-        "created_at": "2025-06-30"
+        "created_at": datetime.now().isoformat()
     }
     
     try:
@@ -771,8 +771,8 @@ async def context_analysis_research(context: SimpleBusinessContext):
         
         return {
             "session_id": session_id,
-            "status": "completed",  # ← CHANGED: Should be "completed" not "error"
-            "message": "Comprehensive ICP research with belief mapping completed",  # ← CHANGED: Success message
+            "status": "completed",
+            "message": "Comprehensive ICP research with belief mapping completed",
             "phases_completed": {
                 "icp_research": "✅ Complete with belief mapping",
                 "simulated_interviews": "✅ Interview intelligence gathered" if interview_results else "⚠️ Not available",
@@ -785,6 +785,18 @@ async def context_analysis_research(context: SimpleBusinessContext):
                 "voice_of_customer": True
             },
             "full_results_url": f"/research/{session_id}/report"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error processing context analysis: {str(e)}",
+            "agents_available": AGENTS_AVAILABLE,
+            "troubleshooting": "Check deployment logs for agent import status"
         }
 
 @app.get("/research/{session_id}/report")
@@ -869,17 +881,7 @@ async def get_research_results(session_id: str):
         "created_at": session["created_at"]
     }
 
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy", 
-        "service": "market-research-agents", 
-        "version": "3.0.0",
-        "agents_available": AGENTS_AVAILABLE,
-        "interview_agent": INTERVIEW_AGENT_AVAILABLE,
-        "claude_enabled": USE_CLAUDE
-    }
-    # ============= REPORT PERSISTENCE ENDPOINTS =============
+# ============= REPORT PERSISTENCE ENDPOINTS =============
 
 @app.get("/reports/list")
 async def list_reports():
@@ -983,6 +985,17 @@ async def cleanup_old_reports(days_old: int = 30):
         return {"error": str(e), "deleted": 0}
 
 # ============= END REPORT PERSISTENCE ENDPOINTS =============
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy", 
+        "service": "market-research-agents", 
+        "version": "3.0.0",
+        "agents_available": AGENTS_AVAILABLE,
+        "interview_agent": INTERVIEW_AGENT_AVAILABLE,
+        "claude_enabled": USE_CLAUDE
+    }
 
 if __name__ == "__main__":
     import uvicorn

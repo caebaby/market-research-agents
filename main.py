@@ -5,6 +5,7 @@ import os
 from typing import Dict, Any, Optional
 import json
 from datetime import datetime, timedelta
+from deep_intelligence_formatter import format_deep_intelligence_report
 from dotenv import load_dotenv
 
 # Load environment variables

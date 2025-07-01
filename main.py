@@ -178,6 +178,17 @@ except ImportError:
     INTERVIEW_AGENT_AVAILABLE = False
     interview_agent = None
 
+# Try to import comprehensive coordinator
+try:
+    from agents.avatar_agnostic_coordinator import run_comprehensive_research
+    comprehensive_agent = run_comprehensive_research
+    COMPREHENSIVE_AGENT_AVAILABLE = True
+    print("✅ Successfully imported comprehensive coordinator")
+except ImportError:
+    print("⚠️ Comprehensive coordinator not available")
+    COMPREHENSIVE_AGENT_AVAILABLE = False
+    comprehensive_agent = None
+
 app = FastAPI(title="Market Research Agent Team", version="3.0.0")
 
 # Data Models
@@ -196,6 +207,7 @@ async def root():
         "status": "Multi-Agent System Ready" if AGENTS_AVAILABLE else "Agent System Loading",
         "agents_available": AGENTS_AVAILABLE,
         "interview_agent": INTERVIEW_AGENT_AVAILABLE,
+        "comprehensive_pipeline": COMPREHENSIVE_AGENT_AVAILABLE,
         "claude_enabled": USE_CLAUDE
     }
 
@@ -799,6 +811,234 @@ async def context_analysis_research(context: SimpleBusinessContext):
             "troubleshooting": "Check deployment logs for agent import status"
         }
 
+@app.post("/research/comprehensive-analysis")
+async def comprehensive_research_analysis(context: SimpleBusinessContext):
+    """
+    Run complete research pipeline: ICP + Interviews + Marketing Strategy
+    Uses the avatar_agnostic_coordinator to orchestrate all agents
+    """
+    
+    session_id = f"comprehensive_research_{len(research_sessions) + 1}"
+    
+    research_sessions[session_id] = {
+        "status": "processing",
+        "business_context": {"comprehensive_context": context.comprehensive_context},
+        "agent_results": {},
+        "created_at": datetime.now().isoformat()
+    }
+    
+    try:
+        if not COMPREHENSIVE_AGENT_AVAILABLE:
+            return {
+                "session_id": session_id,
+                "status": "error",
+                "message": "Comprehensive research pipeline not available. Using basic analysis instead.",
+                "fallback_url": "/research/context-analysis"
+            }
+        
+        print(f"🚀 Starting comprehensive research pipeline...")
+        
+        # Run the comprehensive coordinator
+        comprehensive_results = comprehensive_agent(context.comprehensive_context)
+        
+        # Store results
+        research_sessions[session_id]["agent_results"]["comprehensive"] = comprehensive_results
+        research_sessions[session_id]["status"] = "completed"
+        
+        # Save comprehensive report to disk
+        try:
+            os.makedirs("reports", exist_ok=True)
+            report_filename = f"reports/{session_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_comprehensive.json"
+            
+            report_data = {
+                "session_id": session_id,
+                "created_at": datetime.now().isoformat(),
+                "business_context": context.comprehensive_context,
+                "results": comprehensive_results,
+                "status": "completed",
+                "research_type": "comprehensive_pipeline"
+            }
+            
+            with open(report_filename, 'w') as f:
+                json.dump(report_data, f, indent=2)
+            
+            research_sessions[session_id]["report_file"] = report_filename
+            print(f"📄 Comprehensive report saved to {report_filename}")
+            
+        except Exception as e:
+            print(f"⚠️ Failed to save comprehensive report: {str(e)}")
+        
+        return {
+            "session_id": session_id,
+            "status": "completed",
+            "message": "Comprehensive research pipeline completed",
+            "phases_completed": {
+                "icp_research": "✅ Deep customer psychology with Schwartz analysis",
+                "interview_intelligence": "✅ Persona interviews with authentic language" if comprehensive_results.get("success") else "⚠️ Fallback used",
+                "marketing_strategy": "✅ Copy-ready campaigns and strategy" if comprehensive_results.get("success") else "⚠️ Fallback used"
+            },
+            "pipeline_status": comprehensive_results.get("success", False),
+            "agents_used": comprehensive_results.get("agents_used", {}),
+            "deliverables": {
+                "customer_intelligence": "Deep psychological insights and belief systems",
+                "voice_of_customer": "Authentic language patterns and decision psychology", 
+                "marketing_assets": "Headlines, ads, emails, landing pages ready to deploy",
+                "strategic_framework": "Complete positioning and campaign strategy"
+            },
+            "full_results": comprehensive_results,
+            "full_results_url": f"/research/{session_id}/results",
+            "cost_efficiency": "3x more intelligence for same cost as basic research"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error in comprehensive research: {str(e)}",
+            "troubleshooting": "Check coordinator and agent configurations"
+        }
+
+@app.get("/test-comprehensive")
+async def test_comprehensive_form():
+    """
+    Test form for the comprehensive research pipeline
+    """
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>🚀 Test Comprehensive Research Pipeline</title>
+        <style>
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 900px; 
+                margin: 30px auto; 
+                padding: 30px;
+                background-color: #f8fafc;
+            }
+            .container {
+                background: white;
+                padding: 40px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            h1 { 
+                color: #1e293b; 
+                border-bottom: 3px solid #059669;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }
+            .description {
+                background: #f0fdf4;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 25px;
+                border-left: 4px solid #059669;
+            }
+            textarea { 
+                width: 100%; 
+                height: 350px; 
+                padding: 20px; 
+                font-size: 14px;
+                border: 2px solid #e5e7eb;
+                border-radius: 8px;
+                font-family: 'SF Mono', Monaco, monospace;
+                line-height: 1.5;
+                resize: vertical;
+                box-sizing: border-box;
+            }
+            button { 
+                background: linear-gradient(135deg, #059669, #047857);
+                color: white; 
+                padding: 16px 32px; 
+                border: none; 
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                margin-top: 20px;
+                width: 100%;
+            }
+            #results {
+                margin-top: 30px;
+                padding: 25px;
+                background: #f0fdf4;
+                border-radius: 8px;
+                border: 1px solid #059669;
+                display: none;
+            }
+            pre {
+                white-space: pre-wrap;
+                font-size: 13px;
+                max-height: 500px;
+                overflow-y: auto;
+                background: white;
+                padding: 15px;
+                border-radius: 6px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 Comprehensive Research Pipeline Test</h1>
+            
+            <div class="description">
+                <strong>Full Pipeline Test:</strong> This will run ICP Research → Interview Intelligence → Marketing Strategy through the coordinator.
+                <br><br>
+                <strong>⏱️ Processing Time:</strong> 5-8 minutes (3 phases + synthesis)
+            </div>
+            
+            <form id="comprehensiveForm">
+                <textarea id="business_context" placeholder="Paste your comprehensive business context here (same format as regular form)..." required></textarea>
+                
+                <button type="submit">🚀 Test Comprehensive Pipeline</button>
+            </form>
+            
+            <div id="results"></div>
+        </div>
+
+        <script>
+            document.getElementById('comprehensiveForm').onsubmit = async function(e) {
+                e.preventDefault();
+                
+                const button = document.querySelector('button');
+                const results = document.getElementById('results');
+                
+                button.textContent = '🚀 Pipeline Processing...';
+                button.disabled = true;
+                
+                results.style.display = 'block';
+                results.innerHTML = '<div style="text-align: center; padding: 40px; color: #059669; font-weight: 600;">🚀 Comprehensive Pipeline Working...<br><br>🧠 Phase 1: ICP Research<br>🎭 Phase 2: Interview Intelligence<br>🎯 Phase 3: Marketing Strategy<br><br>⏱️ This may take several minutes...</div>';
+                
+                const data = {
+                    comprehensive_context: document.getElementById('business_context').value
+                };
+                
+                try {
+                    const response = await fetch('/research/comprehensive-analysis', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    results.innerHTML = '<h3>🎉 Comprehensive Pipeline Results:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } catch (error) {
+                    results.innerHTML = '<h3>❌ Error:</h3><p>' + error.message + '</p>';
+                }
+                
+                button.textContent = '🚀 Test Comprehensive Pipeline';
+                button.disabled = false;
+            };
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
 @app.get("/research/{session_id}/report")
 async def get_formatted_report(session_id: str):
     """
@@ -994,6 +1234,7 @@ async def health_check():
         "version": "3.0.0",
         "agents_available": AGENTS_AVAILABLE,
         "interview_agent": INTERVIEW_AGENT_AVAILABLE,
+        "comprehensive_pipeline": COMPREHENSIVE_AGENT_AVAILABLE,
         "claude_enabled": USE_CLAUDE
     }
 

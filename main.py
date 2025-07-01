@@ -1259,6 +1259,73 @@ async def cleanup_old_reports(days_old: int = 30):
 
 # ============= END REPORT PERSISTENCE ENDPOINTS =============
 
+# ============= END REPORT PERSISTENCE ENDPOINTS =============
+
+@app.get("/research/{session_id}/psychology")
+async def get_deep_psychology_report(session_id: str, format: str = "html"):
+    """
+    Get deep psychological intelligence report - know your ICP better than they know themselves
+    """
+    if session_id not in research_sessions:
+        raise HTTPException(status_code=404, detail="Research session not found")
+    
+    session = research_sessions[session_id]
+    
+    if session["status"] != "completed":
+        return HTMLResponse(content="<h1>Report still processing...</h1>")
+    
+    # Get session data
+    session_data = {
+        "session_id": session_id,
+        "business_context": session["business_context"],
+        "agent_results": session.get("agent_results", {}),
+        "created_at": session["created_at"]
+    }
+    
+    # For now, return a placeholder until we create the formatter file
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Deep Psychology Report - Session {session_id}</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 900px;
+                margin: 40px auto;
+                padding: 40px;
+                background: #f8fafc;
+            }}
+            .container {{
+                background: white;
+                padding: 60px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }}
+            h1 {{
+                color: #2d3748;
+                border-bottom: 3px solid #9f7aea;
+                padding-bottom: 20px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🧠 Deep Psychology Report</h1>
+            <p><strong>Session:</strong> {session_id}</p>
+            <p><strong>Status:</strong> Deep intelligence formatter will be added next</p>
+            <p>This will show deep psychological insights about your customers' unconscious motivations, fears, and decision patterns.</p>
+            <a href="/research/{session_id}/report">← Back to Standard Report</a>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_content)
+
+@app.get("/health")
+async def health_check():
+
 @app.get("/health")
 async def health_check():
     return {

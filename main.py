@@ -1268,9 +1268,73 @@ async def cleanup_old_reports(days_old: int = 30):
     except Exception as e:
         return {"error": str(e), "deleted": 0}
 
-# ============= END REPORT PERSISTENCE ENDPOINTS =============
+@app.get("/library")
+async def research_library():
+    """Simple research library to access saved reports"""
+    
+    # Get all saved report files
+    saved_reports = []
+    if os.path.exists("reports"):
+        for filename in os.listdir("reports"):
+            if filename.endswith('.json'):
+                try:
+                    with open(f"reports/{filename}", 'r') as f:
+                        report_data = json.load(f)
+                    saved_reports.append({
+                        "filename": filename,
+                        "company_name": report_data.get("company_name", "Unknown"),
+                        "created_at": report_data.get("created_at", "Unknown"),
+                        "session_id": report_data.get("session_id", "unknown")
+                    })
+                except:
+                    pass
+    
+    # Sort by date (newest first)
+    saved_reports.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>📚 Research Library</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }}
+            .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; }}
+            h1 {{ color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }}
+            .report-item {{ border: 1px solid #ddd; margin: 10px 0; padding: 20px; border-radius: 8px; }}
+            .company-name {{ font-size: 1.2em; font-weight: bold; color: #007acc; }}
+            .date {{ color: #666; font-size: 0.9em; }}
+            .buttons {{ margin-top: 10px; }}
+            .btn {{ background: #007acc; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px; }}
+            .btn:hover {{ background: #005fa3; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>📚 Research Library</h1>
+            <p>Access all your saved market research reports</p>
+            
+            {"".join([f'''
+            <div class="report-item">
+                <div class="company-name">{report["company_name"]}</div>
+                <div class="date">Created: {report["created_at"][:10]}</div>
+                <div class="buttons">
+                    <a href="/research/{report["session_id"]}/psychology" class="btn">🧠 Psychology Report</a>
+                    <a href="/research/{report["session_id"]}/report" class="btn">📊 Standard Report</a>
+                    <a href="/research/{report["session_id"]}/results" class="btn">📋 Raw Data</a>
+                </div>
+            </div>
+            ''' for report in saved_reports]) if saved_reports else '<p>No saved reports yet. <a href="/research">Start your first research</a></p>'}
+            
+        </div>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_content)
 
 # ============= END REPORT PERSISTENCE ENDPOINTS =============
+
 
 @app.get("/research/{session_id}/psychology")
 async def get_deep_psychology_report(session_id: str, format: str = "html"):

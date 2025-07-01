@@ -1281,14 +1281,43 @@ async def research_library():
                 try:
                     with open(f"reports/{filename}", 'r') as f:
                         report_data = json.load(f)
+                    
+                    # Better session_id extraction - use the data from the file
+                    session_id = report_data.get("session_id", "unknown")
+                    
+                    # If session_id not in data, try to extract from filename more carefully
+                    if session_id == "unknown":
+                        # Look for pattern: context_research_X_ in filename
+                        import re
+                        match = re.search(r'(context_research_\d+)', filename)
+                        if match:
+                            session_id = match.group(1)
+                        else:
+                            # Fallback: take everything before the first timestamp
+                            parts = filename.split('_')
+                            if len(parts) >= 3 and parts[2].isdigit() and len(parts[2]) == 8:
+                                session_id = '_'.join(parts[:2])
+                            else:
+                                session_id = parts[0] if parts else "unknown"
+                    
                     saved_reports.append({
                         "filename": filename,
                         "company_name": report_data.get("company_name", "Unknown"),
                         "created_at": report_data.get("created_at", "Unknown"),
-                        "session_id": report_data.get("session_id", "unknown")
+                        "session_id": session_id
                     })
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Error processing file {filename}: {e}")
+                    # Add it anyway with basic info
+                    match = re.search(r'(context_research_\d+)', filename)
+                    session_id = match.group(1) if match else "unknown"
+                    
+                    saved_reports.append({
+                        "filename": filename,
+                        "company_name": "Error loading data",
+                        "created_at": "Unknown",
+                        "session_id": session_id
+                    })
     
     # Sort by date (newest first)
     saved_reports.sort(key=lambda x: x["created_at"], reverse=True)
@@ -1305,9 +1334,11 @@ async def research_library():
             .report-item {{ border: 1px solid #ddd; margin: 10px 0; padding: 20px; border-radius: 8px; }}
             .company-name {{ font-size: 1.2em; font-weight: bold; color: #007acc; }}
             .date {{ color: #666; font-size: 0.9em; }}
+            .session-info {{ color: #888; font-size: 0.8em; margin-top: 5px; }}
             .buttons {{ margin-top: 10px; }}
             .btn {{ background: #007acc; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px; }}
             .btn:hover {{ background: #005fa3; }}
+            .debug {{ background: #f0f0f0; padding: 10px; margin-top: 20px; border-radius: 4px; font-size: 0.8em; }}
         </style>
     </head>
     <body>
@@ -1318,7 +1349,8 @@ async def research_library():
             {"".join([f'''
             <div class="report-item">
                 <div class="company-name">{report["company_name"]}</div>
-                <div class="date">Created: {report["created_at"][:10]}</div>
+                <div class="date">Created: {report["created_at"][:10] if len(str(report["created_at"])) > 10 else report["created_at"]}</div>
+                <div class="session-info">Session: {report["session_id"]} | File: {report["filename"][:50]}...</div>
                 <div class="buttons">
                     <a href="/research/{report["session_id"]}/psychology" class="btn">🧠 Psychology Report</a>
                     <a href="/research/{report["session_id"]}/report" class="btn">📊 Standard Report</a>
@@ -1327,6 +1359,12 @@ async def research_library():
             </div>
             ''' for report in saved_reports]) if saved_reports else '<p>No saved reports yet. <a href="/research">Start your first research</a></p>'}
             
+            <div class="debug">
+                <strong>Debug Info:</strong><br>
+                Found {len(saved_reports)} report(s)<br>
+                Reports directory exists: {os.path.exists("reports")}<br>
+                Total files in reports/: {len([f for f in os.listdir("reports") if f.endswith('.json')]) if os.path.exists("reports") else 0}
+            </div>
         </div>
     </body>
     </html>

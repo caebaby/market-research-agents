@@ -752,14 +752,23 @@ async def context_analysis_research(context: SimpleBusinessContext):
         research_sessions[session_id]["agent_results"]["comprehensive_research"] = combined_results
         research_sessions[session_id]["status"] = "completed"
         
-        # Save report to disk for persistence
+        # Save report to disk for persistence with enhanced organization
         try:
             os.makedirs("reports", exist_ok=True)
-            report_filename = f"reports/{session_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Extract company name for better file organization
+            context_text = context.comprehensive_context
+            company_match = re.search(r'COMPANY NAME:\s*(.+)', context_text, re.IGNORECASE)
+            company_name = company_match.group(1).strip().replace(" ", "_").replace("/", "_") if company_match else "Unknown_Company"
+            
+            # Save detailed JSON report with company name in filename
+            report_filename = f"reports/{session_id}_{timestamp}_{company_name}_complete.json"
             
             report_data = {
                 "session_id": session_id,
                 "created_at": datetime.now().isoformat(),
+                "company_name": company_name.replace("_", " "),
                 "business_context": context.comprehensive_context,
                 "results": combined_results,
                 "status": "completed",
@@ -772,12 +781,14 @@ async def context_analysis_research(context: SimpleBusinessContext):
                 }
             }
             
-            with open(report_filename, 'w') as f:
-                json.dump(report_data, f, indent=2)
+            with open(report_filename, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, indent=2, ensure_ascii=False)
             
-            # Store filename in session for easy retrieval
+            # Store filename and company info in session for easy retrieval
             research_sessions[session_id]["report_file"] = report_filename
-            print(f"📄 Report saved to {report_filename}")
+            research_sessions[session_id]["company_name"] = company_name.replace("_", " ")
+            
+            print(f"📄 Report saved: {report_filename}")
             
         except Exception as e:
             print(f"⚠️ Failed to save report: {str(e)}")

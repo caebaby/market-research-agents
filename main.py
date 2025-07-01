@@ -1053,7 +1053,7 @@ async def get_formatted_report(session_id: str):
     if session["status"] != "completed":
         return HTMLResponse(content="<h1>Report still processing...</h1>")
     
-    # For now, return raw JSON - in production, you'd parse and format this beautifully
+    # Get results
     results = session.get("agent_results", {}).get("comprehensive_research", {})
     
     html_report = f"""
@@ -1065,11 +1065,11 @@ async def get_formatted_report(session_id: str):
             body {{
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 line-height: 1.6;
-                color: #1a1a1a;
+                color: #2d3748;
                 max-width: 900px;
                 margin: 0 auto;
                 padding: 40px 20px;
-                background-color: #f8f9fa;
+                background-color: #f7fafc;
             }}
             .report-container {{
                 background: white;
@@ -1078,9 +1078,43 @@ async def get_formatted_report(session_id: str):
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }}
             h1 {{
-                color: #0066cc;
+                color: #1a202c;
                 font-size: 2.5em;
                 margin-bottom: 20px;
+                border-bottom: 3px solid #3182ce;
+                padding-bottom: 15px;
+            }}
+            .action-buttons {{
+                background: #edf2f7;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 30px;
+                text-align: center;
+            }}
+            .btn {{
+                display: inline-block;
+                background: #3182ce;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 6px;
+                margin: 0 10px;
+                font-weight: 500;
+            }}
+            .btn:hover {{
+                background: #2c5aa0;
+            }}
+            .btn-secondary {{
+                background: #48bb78;
+            }}
+            .btn-secondary:hover {{
+                background: #38a169;
+            }}
+            .btn-psychology {{
+                background: #9f7aea;
+            }}
+            .btn-psychology:hover {{
+                background: #805ad5;
             }}
             pre {{
                 white-space: pre-wrap;
@@ -1088,39 +1122,37 @@ async def get_formatted_report(session_id: str):
                 background: #f5f5f5;
                 padding: 20px;
                 border-radius: 8px;
+                font-size: 14px;
+                max-height: 600px;
+                overflow-y: auto;
             }}
         </style>
     </head>
     <body>
         <div class="report-container">
+            <div class="action-buttons">
+                <a href="/research/{session_id}/psychology" class="btn btn-psychology">🧠 Deep Psychology</a>
+                <a href="/research/{session_id}/gtm" class="btn btn-secondary">🎯 GTM Strategy</a>
+                <a href="/research/{session_id}/results" class="btn">🔍 Raw JSON</a>
+            </div>
+            
             <h1>Market Intelligence Report</h1>
-            <p>Session ID: {session_id}</p>
+            <p><strong>Session ID:</strong> {session_id}</p>
             <h2>Research Results</h2>
             <pre>{json.dumps(results, indent=2)}</pre>
+            
+            <hr style="margin: 40px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <p style="text-align: center; color: #718096; font-size: 0.9em;">
+                Session {session_id} • 
+                <a href="/research/{session_id}/psychology">Deep Psychology</a> • 
+                <a href="/research/{session_id}/results">Raw Data</a>
+            </p>
         </div>
     </body>
     </html>
     """
     
     return HTMLResponse(content=html_report)
-
-@app.get("/research/{session_id}/results")
-async def get_research_results(session_id: str):
-    """
-    Get the full research results as JSON
-    """
-    if session_id not in research_sessions:
-        raise HTTPException(status_code=404, detail="Research session not found")
-    
-    session = research_sessions[session_id]
-    
-    return {
-        "session_id": session_id,
-        "status": session["status"],
-        "business_context": session["business_context"],
-        "agent_results": session.get("agent_results", {}),
-        "created_at": session["created_at"]
-    }
 
 # ============= REPORT PERSISTENCE ENDPOINTS =============
 

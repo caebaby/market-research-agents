@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import os
 from typing import Dict, Any, Optional
 import json
+import re  # ADD THIS MISSING IMPORT
 from datetime import datetime, timedelta
 from deep_intelligence_formatter import format_deep_intelligence_report
 from dotenv import load_dotenv
@@ -1335,7 +1336,6 @@ async def research_library():
 
 # ============= END REPORT PERSISTENCE ENDPOINTS =============
 
-
 @app.get("/research/{session_id}/psychology")
 async def get_deep_psychology_report(session_id: str, format: str = "html"):
     """
@@ -1592,6 +1592,24 @@ def deep_psychology_to_html(markdown_content: str, session_id: str) -> str:
     """
     
     return full_html
+
+@app.get("/research/{session_id}/results")
+async def get_research_results(session_id: str):
+    """
+    Get the full research results as JSON
+    """
+    if session_id not in research_sessions:
+        raise HTTPException(status_code=404, detail="Research session not found")
+    
+    session = research_sessions[session_id]
+    
+    return {
+        "session_id": session_id,
+        "status": session["status"],
+        "business_context": session["business_context"],
+        "agent_results": session.get("agent_results", {}),
+        "created_at": session["created_at"]
+    }
 
 @app.get("/health")
 async def health_check():

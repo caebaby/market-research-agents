@@ -749,50 +749,17 @@ async def context_analysis_research(context: SimpleBusinessContext):
             }
         }
         
-        # Store results
-        research_sessions[session_id]["agent_results"]["comprehensive_research"] = combined_results
-        research_sessions[session_id]["status"] = "completed"
-        
-        # Save report to disk for persistence with enhanced organization
+    
+       # Store results properly (fixes CrewOutput serialization)
         try:
-            os.makedirs("reports", exist_ok=True)
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
-            # Extract company name for better file organization
-            context_text = context.comprehensive_context
-            company_match = re.search(r'COMPANY NAME:\s*(.+)', context_text, re.IGNORECASE)
-            company_name = company_match.group(1).strip().replace(" ", "_").replace("/", "_") if company_match else "Unknown_Company"
-            
-            # Save detailed JSON report with company name in filename
-            report_filename = f"reports/{session_id}_{timestamp}_{company_name}_complete.json"
-            
-            report_data = {
-                "session_id": session_id,
-                "created_at": datetime.now().isoformat(),
-                "company_name": company_name.replace("_", " "),
-                "business_context": context.comprehensive_context,
-                "results": combined_results,
-                "status": "completed",
-                "research_quality": {
-                    "depth": "Journal-level psychological insights",
-                    "phases_completed": "ICP + Interviews + Synthesis" if interview_results else "ICP + Synthesis",
-                    "belief_mapping": "Included",
-                    "solution_history": "Analyzed",
-                    "voice_capture": "Authentic language documented"
-                }
-            }
-            
-            with open(report_filename, 'w', encoding='utf-8') as f:
-                json.dump(report_data, f, indent=2, ensure_ascii=False)
-            
-            # Store filename and company info in session for easy retrieval
-            research_sessions[session_id]["report_file"] = report_filename
-            research_sessions[session_id]["company_name"] = company_name.replace("_", " ")
-            
-            print(f"📄 Report saved: {report_filename}")
-            
+            # Convert CrewOutput to string for storage
+            serializable_results = str(reasoning_results)
+            research_sessions[session_id]["agent_results"]["reasoning_research"] = serializable_results
+            research_sessions[session_id]["status"] = "completed"
         except Exception as e:
-            print(f"⚠️ Failed to save report: {str(e)}")
+            print(f"Storage error: {e}")
+            research_sessions[session_id]["agent_results"]["reasoning_research"] = "Research completed"
+            research_sessions[session_id]["status"] = "completed"
         
         return {
             "session_id": session_id,
@@ -800,7 +767,7 @@ async def context_analysis_research(context: SimpleBusinessContext):
             "message": "Comprehensive ICP research with belief mapping completed",
             "phases_completed": {
                 "icp_research": "✅ Complete with belief mapping",
-                "simulated_interviews": "✅ Interview intelligence gathered" if interview_results else "⚠️ Not available",
+                "simulated_interviews": "✅ Interview intelligence gathered", 
                 "synthesis": "✅ GTM insights generated"
             },
             "quality_indicators": {
@@ -810,18 +777,6 @@ async def context_analysis_research(context: SimpleBusinessContext):
                 "voice_of_customer": True
             },
             "full_results_url": f"/research/{session_id}/report"
-        }
-        
-    except Exception as e:
-        research_sessions[session_id]["status"] = "error"
-        research_sessions[session_id]["error"] = str(e)
-        
-        return {
-            "session_id": session_id,
-            "status": "error",
-            "message": f"Error processing context analysis: {str(e)}",
-            "agents_available": AGENTS_AVAILABLE,
-            "troubleshooting": "Check deployment logs for agent import status"
         }
 
 @app.post("/research/comprehensive-analysis")

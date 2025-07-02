@@ -749,16 +749,15 @@ async def context_analysis_research(context: SimpleBusinessContext):
             }
         }
         
-    
-       # Store results properly (fixes CrewOutput serialization)
+        # Store results properly (fixes CrewOutput serialization)
         try:
-            # Convert CrewOutput to string for storage
-            serializable_results = str(reasoning_results)
-            research_sessions[session_id]["agent_results"]["reasoning_research"] = serializable_results
+            # Convert results to string for storage
+            serializable_results = str(combined_results)
+            research_sessions[session_id]["agent_results"]["comprehensive_research"] = serializable_results
             research_sessions[session_id]["status"] = "completed"
         except Exception as e:
             print(f"Storage error: {e}")
-            research_sessions[session_id]["agent_results"]["reasoning_research"] = "Research completed"
+            research_sessions[session_id]["agent_results"]["comprehensive_research"] = "Research completed"
             research_sessions[session_id]["status"] = "completed"
         
         return {
@@ -777,6 +776,16 @@ async def context_analysis_research(context: SimpleBusinessContext):
                 "voice_of_customer": True
             },
             "full_results_url": f"/research/{session_id}/report"
+        }
+        
+    except Exception as e:
+        research_sessions[session_id]["status"] = "error"
+        research_sessions[session_id]["error"] = str(e)
+        
+        return {
+            "session_id": session_id,
+            "status": "error",
+            "message": f"Error processing context analysis: {str(e)}"
         }
 
 @app.post("/research/comprehensive-analysis")

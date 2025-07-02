@@ -1273,55 +1273,39 @@ async def cleanup_old_reports(days_old: int = 30):
 
 @app.get("/library")
 async def research_library():
-    """Simple research library to access saved reports"""
+    """Research library using in-memory session data (Render compatible)"""
     
-    # Get all saved report files
+    # Get reports from in-memory sessions instead of disk files
     saved_reports = []
-    if os.path.exists("reports"):
-        for filename in os.listdir("reports"):
-            if filename.endswith('.json'):
-                try:
-                    with open(f"reports/{filename}", 'r') as f:
-                        report_data = json.load(f)
-                    
-                    # Better session_id extraction - use the data from the file
-                    session_id = report_data.get("session_id", "unknown")
-                    
-                    # If session_id not in data, try to extract from filename more carefully
-                    if session_id == "unknown":
-                        # Look for pattern: context_research_X_ in filename
-                        import re
-                        match = re.search(r'(context_research_\d+)', filename)
-                        if match:
-                            session_id = match.group(1)
-                        else:
-                            # Fallback: take everything before the first timestamp
-                            parts = filename.split('_')
-                            if len(parts) >= 3 and parts[2].isdigit() and len(parts[2]) == 8:
-                                session_id = '_'.join(parts[:2])
-                            else:
-                                session_id = parts[0] if parts else "unknown"
-                    
-                    saved_reports.append({
-                        "filename": filename,
-                        "company_name": report_data.get("company_name", "Unknown"),
-                        "created_at": report_data.get("created_at", "Unknown"),
-                        "session_id": session_id
-                    })
-                except Exception as e:
-                    print(f"Error processing file {filename}: {e}")
-                    # Add it anyway with basic info
-                    match = re.search(r'(context_research_\d+)', filename)
-                    session_id = match.group(1) if match else "unknown"
-                    
-                    saved_reports.append({
-                        "filename": filename,
-                        "company_name": "Error loading data",
-                        "created_at": "Unknown",
-                        "session_id": session_id
-                    })
     
-    # Sort by date (newest first)
+    for session_id, session_data in research_sessions.items():
+        if session_data.get("status") == "completed":
+            # Extract company name from business context
+            business_context = session_data.get("business_context", {})
+            context_text = ""
+            
+            if isinstance(business_context, dict):
+                context_text = business_context.get("comprehensive_context", "")
+            else:
+                context_text = str(business_context)
+            
+            # Extract company name
+            company_name = "Unknown Company"
+            if "COMPANY NAME:" in context_text:
+                import re
+                match = re.search(r'COMPANY NAME:\s*(.+)', context_text, re.IGNORECASE)
+                if match:
+                    company_name = match.group(1).strip()
+            
+            saved_reports.append({
+                "session_id": session_id,
+                "company_name": company_name,
+                "created_at": session_data.get("created_at", "Unknown"),
+                "status": session_data.get("status", "unknown"),
+                "has_results": bool(session_data.get("agent_results", {}))
+            })
+    
+    # Sort by creation time (newest first)
     saved_reports.sort(key=lambda x: x["created_at"], reverse=True)
     
     html_content = f"""
@@ -1341,6 +1325,7 @@ async def research_library():
             .btn {{ background: #007acc; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px; }}
             .btn:hover {{ background: #005fa3; }}
             .debug {{ background: #f0f0f0; padding: 10px; margin-top: 20px; border-radius: 4px; font-size: 0.8em; }}
+            .success {{ background: #d4edda; padding: 15px; border-radius: 4px; margin-bottom: 20px; color: #155724; }}
         </style>
     </head>
     <body>
@@ -1348,24 +1333,28 @@ async def research_library():
             <h1>📚 Research Library</h1>
             <p>Access all your saved market research reports</p>
             
+            {f'<div class="success">✅ Found {len(saved_reports)} completed research session(s)</div>' if saved_reports else ''}
+            
             {"".join([f'''
             <div class="report-item">
                 <div class="company-name">{report["company_name"]}</div>
                 <div class="date">Created: {report["created_at"][:10] if len(str(report["created_at"])) > 10 else report["created_at"]}</div>
-                <div class="session-info">Session: {report["session_id"]} | File: {report["filename"][:50]}...</div>
+                <div class="session-info">Session: {report["session_id"]} | Status: {report["status"]}</div>
                 <div class="buttons">
                     <a href="/research/{report["session_id"]}/psychology" class="btn">🧠 Psychology Report</a>
                     <a href="/research/{report["session_id"]}/report" class="btn">📊 Standard Report</a>
                     <a href="/research/{report["session_id"]}/results" class="btn">📋 Raw Data</a>
                 </div>
             </div>
-            ''' for report in saved_reports]) if saved_reports else '<p>No saved reports yet. <a href="/research">Start your first research</a></p>'}
+            ''' for report in saved_reports]) if saved_reports else '<p>No completed research sessions yet. <a href="/research">Start your first research</a></p>'}
             
             <div class="debug">
                 <strong>Debug Info:</strong><br>
-                Found {len(saved_reports)} report(s)<br>
-                Reports directory exists: {os.path.exists("reports")}<br>
-                Total files in reports/: {len([f for f in os.listdir("reports") if f.endswith('.json')]) if os.path.exists("reports") else 0}
+                Total sessions in memory: {len(research_sessions)}<br>
+                Completed sessions: {len(saved_reports)}<br>
+                Session IDs: {list(research_sessions.keys())}<br>
+                File system (Render ephemeral): Reports directory exists on disk: {os.path.exists("reports")}<br>
+                <em>Note: Using in-memory storage since Render file system is ephemeral</em>
             </div>
         </div>
     </body>

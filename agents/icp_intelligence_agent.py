@@ -305,25 +305,68 @@ You must stay focused ONLY on your specialty area to ensure depth within token l
             }
         }
 
-# Drop-in replacement for your existing function
 def reasoning_agent_call(business_context):
     """
-    Chunked reasoning agent that respects token limits while providing deep analysis
+    LangChain-powered research agent with session isolation
     """
-    agent = ChunkedReasoningAgent()
+    import os
+    from langchain_openai import ChatOpenAI
+    from langchain.prompts import PromptTemplate
+    from langchain.chains import LLMChain
     
-    # Handle different input formats
+    # Create fresh LLM for each call (prevents contamination)
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",
+        temperature=0.3,
+        openai_api_key=os.getenv("OPENAI_API_KEY")
+    )
+    
+    # Enhanced prompt with session isolation
+    prompt_template = PromptTemplate(
+        input_variables=["business_context"],
+        template="""
+SESSION ISOLATION: This is a completely fresh research analysis. You have NO memory of previous research sessions.
+
+CRITICAL: Ignore any previous research about financial advisors, Axiom Planning, or other businesses.
+
+BUSINESS CONTEXT TO ANALYZE:
+{business_context}
+
+Conduct comprehensive ICP research with Eugene Schwartz-level psychological depth:
+
+1. CUSTOMER PSYCHOLOGY ANALYSIS
+   - Deep psychological drivers and motivations
+   - Hidden pain points and desires
+   - Belief system analysis
+
+2. VOICE OF CUSTOMER CAPTURE
+   - Authentic language patterns
+   - Exact phrases customers use
+   - Emotional expressions and triggers
+
+3. BUYER PSYCHOLOGY FRAMEWORKS
+   - Eugene Schwartz awareness levels
+   - Decision-making triggers
+   - Objection patterns
+
+4. CAMPAIGN-READY INSIGHTS
+   - Positioning recommendations
+   - Messaging angles
+   - Conversion psychology
+
+Focus EXCLUSIVELY on the business context provided above. Provide journal-level psychological insights that would make clients say "how did you know that?"
+"""
+    )
+    
+    # Handle different input formats (keeping your existing logic)
     if isinstance(business_context, str):
-        context_dict = {
-            "company_name": "Analysis Request",
-            "comprehensive_context": business_context,
-            "industry": "To be determined",
-            "target_market": "To be analyzed"
-        }
+        context_input = business_context
     else:
-        context_dict = business_context
+        # If it's a dict, extract the comprehensive context
+        context_input = business_context.get('comprehensive_context', str(business_context))
     
-    # Execute chunked analysis
-    result = agent.execute_chunked_analysis(context_dict)
+    # Create and execute chain
+    chain = LLMChain(llm=llm, prompt=prompt_template)
+    result = chain.run(business_context=context_input)
     
     return result

@@ -1464,6 +1464,73 @@ async def get_deep_psychology_report(session_id: str, format: str = "html"):
     
     return HTMLResponse(content=html_content)
 
+@app.get("/debug-library")
+async def debug_library():
+    """Debug what's happening with the library"""
+    
+    debug_info = {
+        "reports_directory_exists": os.path.exists("reports"),
+        "files_in_reports": [],
+        "processed_reports": [],
+        "research_sessions": {}
+    }
+    
+    # Check reports directory
+    if os.path.exists("reports"):
+        all_files = os.listdir("reports")
+        debug_info["files_in_reports"] = all_files
+        
+        for filename in all_files:
+            if filename.endswith('.json'):
+                try:
+                    with open(f"reports/{filename}", 'r') as f:
+                        report_data = json.load(f)
+                    
+                    # Extract session_id using multiple methods
+                    session_id_from_data = report_data.get("session_id", "NOT_FOUND")
+                    
+                    # Try regex extraction
+                    import re
+                    regex_match = re.search(r'(context_research_\d+)', filename)
+                    session_id_from_regex = regex_match.group(1) if regex_match else "NO_MATCH"
+                    
+                    # Try simple split
+                    parts = filename.split('_')
+                    session_id_from_split = '_'.join(parts[:3]) if len(parts) >= 3 else "TOO_FEW_PARTS"
+                    
+                    debug_info["processed_reports"].append({
+                        "filename": filename,
+                        "session_id_from_data": session_id_from_data,
+                        "session_id_from_regex": session_id_from_regex,
+                        "session_id_from_split": session_id_from_split,
+                        "company_name": report_data.get("company_name", "NOT_FOUND"),
+                        "created_at": report_data.get("created_at", "NOT_FOUND"),
+                        "file_keys": list(report_data.keys())
+                    })
+                    
+                except Exception as e:
+                    debug_info["processed_reports"].append({
+                        "filename": filename,
+                        "error": str(e)
+                    })
+    
+    # Check in-memory sessions
+    debug_info["research_sessions"] = {
+        "session_count": len(research_sessions),
+        "session_ids": list(research_sessions.keys()),
+        "session_details": {}
+    }
+    
+    for session_id, session_data in research_sessions.items():
+        debug_info["research_sessions"]["session_details"][session_id] = {
+            "status": session_data.get("status"),
+            "has_results": "agent_results" in session_data,
+            "report_file": session_data.get("report_file"),
+            "company_name": session_data.get("company_name")
+        }
+    
+    return debug_info
+
 def deep_psychology_to_html(markdown_content: str, session_id: str) -> str:
     """
     Convert deep psychology markdown to HTML with specialized styling

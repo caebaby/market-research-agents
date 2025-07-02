@@ -1179,8 +1179,10 @@ async def list_reports():
         reports = []
         
         for filename in report_files:
-            # Extract session_id from filename
-            session_id = filename.split('_')[0]
+            # Extract context_research_X from filename
+            import re
+            match = re.search(r'(context_research_\d+)', filename)
+            session_id = match.group(1) if match else filename.split('_')[0]
             timestamp = filename.replace('.json', '').split('_', 1)[1] if '_' in filename else 'unknown'
             
             reports.append({
